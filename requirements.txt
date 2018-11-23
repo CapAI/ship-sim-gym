@@ -1,0 +1,4 @@
+stable-baselines>=2.2.1
+baselines==0.1.5
+pygame==1.9.4
+pymunk==5.4.0

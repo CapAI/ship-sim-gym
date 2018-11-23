@@ -5,8 +5,9 @@ import gym
 import numpy as np
 from baselines.results_plotter import ts2xy
 from stable_baselines.bench import load_results, Monitor
+from stable_baselines.common import set_global_seeds
 from stable_baselines.common.policies import MlpPolicy
-from stable_baselines.common.vec_env import DummyVecEnv
+from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import PPO2
 
 from ship_gym.ship_env import ShipEnv
@@ -43,29 +44,39 @@ def callback(_locals, _globals):
     n_steps += 1
     return False
 
-env = ShipEnv(fps=1, speed=1)
+
+def make_env(rank, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+
+    def _init():
+        env = ShipEnv(fps=100, speed=10)
+        env.seed(seed + rank)
+        return env
+
+    set_global_seeds(seed)
+    return _init
+
+env = ShipEnv(fps=100, speed=10)
 env = Monitor(env, log_dir, allow_early_resets=True)
 env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
 
 np.set_printoptions(suppress=True)
 
-model = PPO2(MlpPolicy, env, verbose=0, tensorboard_log=os.path.join(log_dir, "tensorboard"))
-model.learn(total_timesteps=100000, callback=callback)
-model.save("result")
+tb_dir = os.path.join(log_dir, "tensorboard")
 
-# obs = env.reset()
-# for i in range(10):
-#     # action, _states = model.predict(obs)
-#     action = 0
-#     obs, reward, done, info = env.step(action)
-#
-#     if done:
-#         obs = env.reset()
-#
-#     print("-" * 20)
-#     print("obs = \t", obs)
-#     print("reward = \t", reward)
-#     print("done = \t", done)
-#     print("-" * 20)
+''' SET UP YOUR HYPERPARAMETERS HERE'''
+lrs = [1.0e-5, 1.0e-4, 1.0e-3]
+n_steps = 1e6
 
-    # ship_gym.render()
+for lr in lrs:
+    tb_dir += "/lr=" + str(lr)
+    model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
+    model.learn(total_timesteps=10000, callback=callback)
+    model.save("result")
