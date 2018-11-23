@@ -279,11 +279,13 @@ def reset():
             goals.append(add_goal(x_func(i), y_func(i)))
 
 
-
-    for i in range(1):
-        x = np.random.randint(30, bounds[0] - 30)
-        y = np.random.randint(30, bounds[1] - 30)
-        goals.append(add_goal(x,y))
+    N = 1
+    for i in range(N):
+        # x = np.random.randint(30, bounds[0] - 30)
+        # y = np.random.randint(30, bounds[1] - 30)
+        x = bounds[0] / 2
+        y = bounds[1] / 2
+        goals.append(add_goal(x, y))
 
     # goals.append(add_goal(300, 150))
     # goals.append(add_goal(300, 200))

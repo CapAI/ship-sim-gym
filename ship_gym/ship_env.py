@@ -25,7 +25,7 @@ class ShipEnv(Env):
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
-    def __init__(self, max_steps=1000, speed=1, fps=30):
+    def __init__(self, max_steps=200, speed=1, fps=30):
         self.last_action = None
         self.max_steps = max_steps
         self.last_action = None
