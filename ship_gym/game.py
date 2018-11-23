@@ -24,8 +24,8 @@ colliding = False
 goal_reached = False
 frame_counter = 0
 
-game_frame_dir = "/Users/gerard/Desktop/frames"
-os.makedirs(game_frame_dir, exist_ok=True)
+#game_frame_dir = "/Users/gerard/Desktop/frames"
+#os.makedirs(game_frame_dir, exist_ok=True)
 
 base_dt = 0.1
 
@@ -209,7 +209,7 @@ def render():
 
     pygame.display.flip()
 
-    pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
+    #pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
     frame_counter += 1
     
 

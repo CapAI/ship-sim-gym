@@ -11,8 +11,7 @@ from stable_baselines import PPO2
 
 from ship_gym.ship_env import ShipEnv
 
-log_dir = "/Users/gerard/Desktop/learning/"
-
+log_dir = os.path.expanduser('~/Desktop/learning')
 best_mean_reward = -np.inf
 n_steps = 0
 
