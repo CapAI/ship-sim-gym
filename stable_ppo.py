@@ -63,7 +63,7 @@ def make_env(rank, seed=0):
     set_global_seeds(seed)
     return _init
 
-env = ShipEnv(fps=100, speed=10)
+env = ShipEnv(fps=1000, speed=10)
 env = Monitor(env, log_dir, allow_early_resets=True)
 env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
 
@@ -73,10 +73,10 @@ tb_dir = os.path.join(log_dir, "tensorboard")
 
 ''' SET UP YOUR HYPERPARAMETERS HERE'''
 lrs = [1.0e-5, 1.0e-4, 1.0e-3]
-n_steps = 1e6
+n_steps = 1000000
 
 for lr in lrs:
-    tb_dir += "/lr=" + str(lr)
+    tb_dir += str(int(time.time())) + "/ship_lr=" + str(lr)
     model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
-    model.learn(total_timesteps=10000, callback=callback)
+    model.learn(total_timesteps=n_steps, callback=callback)
     model.save("result")

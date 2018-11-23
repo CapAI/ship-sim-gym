@@ -40,8 +40,6 @@ class GameObject(object):
         self.body = body
         self.shape = shape
 
-
-
 class Ship(object):
 
     def __init__(self, x, y, width, height, color):
@@ -272,22 +270,32 @@ def reset():
 
     identity = lambda x : x
 
+    def grid_goals(n):
+        _goals = []
+
+        for x in range(int(n ** (1/2))):
+            for y in range(int(n ** (1/2))):
+                _goals.append(add_goal(x*bounds[0], y*bounds[1]))
+
+        return _goals
+
+
     def gen_goals(n, x_func=identity, y_func=identity):
 
         goals = list()
         for i in range(n):
             goals.append(add_goal(x_func(i), y_func(i)))
 
+    # goals = grid_goals(100)
+    N = 0
+    # for i in range(N):
+    #     # x = np.random.randint(30, bounds[0] - 30)
+    #     # y = np.random.randint(30, bounds[1] - 30)
+    #     x = 0
+    #     y = 100
+    #     goals.append(add_goal(x, y))
 
-    N = 1
-    for i in range(N):
-        # x = np.random.randint(30, bounds[0] - 30)
-        # y = np.random.randint(30, bounds[1] - 30)
-        x = bounds[0] / 2
-        y = bounds[1] / 2
-        goals.append(add_goal(x, y))
-
-    # goals.append(add_goal(300, 150))
+    goals.append(add_goal(player.x, player.y + 40))
     # goals.append(add_goal(300, 200))
     # goals.append(add_goal(300, 250))
 

@@ -1,4 +1,5 @@
 import sys
+from collections import deque
 
 import numpy as np
 
@@ -8,12 +9,12 @@ from gym.utils import seeding
 
 from ship_gym import game
 
-N_SHIP_POSITIONS = 4
-HISTORY_SIZE = 1
+N_SHIP_POSITIONS = 0
+HISTORY_SIZE = 2
 
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
-N_STATES = (N_SHIP_POSITIONS + 1 + 1) * 2 * HISTORY_SIZE
-print(N_STATES)
+N_STATES = (N_SHIP_POSITIONS + 1 + 1) * 2
+N_TOTAL_STATES = HISTORY_SIZE * N_STATES
 
 class ShipEnv(Env):
 
@@ -21,7 +22,7 @@ class ShipEnv(Env):
     action_space = Discrete(5)
     reward_range = (-1, 1)
 
-    observation_space = Box(low=0, high=max(game.bounds), shape=(N_STATES,), dtype=np.uint8)
+    observation_space = Box(low=0, high=max(game.bounds), shape=(N_TOTAL_STATES,), dtype=np.uint8)
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
@@ -53,14 +54,14 @@ class ShipEnv(Env):
     def normalized_coords(self, x, y):
         return x / game.bounds[0], y / game.bounds[1]
 
-    def set_states(self):
-        self.states = N_STATES * [-1]
+    def add_states(self):
+        states = N_STATES * [-1]
 
         # Myself
-        self.states[:2] = [game.player.x, game.player.y]
+        states[:2] = [game.player.x, game.player.y]
         goal = game.closest_goal()
         if goal:
-            self.states[2:4] = [goal.body.position.x, goal.body.position.y]
+            states[2:4] = [goal.body.position.x, goal.body.position.y]
 
         ship_positions = []
         if len(game.ships) > N_SHIP_POSITIONS:
@@ -74,7 +75,8 @@ class ShipEnv(Env):
             ship_positions.extend([ship.x, ship.y])
 
 
-        self.states[4:4+len(ship_positions)] = ship_positions
+        states[4:4+len(ship_positions)] = ship_positions
+        self.states.extend(states)
 
     def is_done(self):
         if game.colliding:
@@ -93,8 +95,6 @@ class ShipEnv(Env):
             return True
 
 
-
-
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
@@ -105,7 +105,7 @@ class ShipEnv(Env):
         game.render() # Also does the actual game progression
 
         self.determine_reward()
-        self.set_states()
+        self.add_states()
         self.step_count += 1
 
         done = self.is_done()
@@ -129,7 +129,9 @@ class ShipEnv(Env):
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
-        self.set_states()
+
+        self.states = deque([-1] * N_TOTAL_STATES, maxlen=N_TOTAL_STATES)
+        self.add_states()
 
         return np.array(self.states)
 
