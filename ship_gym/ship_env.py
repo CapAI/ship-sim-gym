@@ -11,19 +11,21 @@ from ship_gym import game
 N_SHIP_POSITIONS = 4
 HISTORY_SIZE = 1
 
-# Plus self and goal position times 2 for x and y coordinates, times history size
+# Plus self, other ships and goal position times 2 for x and y coordinates, times history size
 N_STATES = (N_SHIP_POSITIONS + 1 + 1) * 2 * HISTORY_SIZE
+print(N_STATES)
 
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
     action_space = Discrete(5)
+    reward_range = (-1, 1)
 
     observation_space = Box(low=0, high=255, shape=(N_STATES,), dtype=np.uint8)
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
-    def __init__(self, max_steps=1000, speed=100, fps=1):
+    def __init__(self, max_steps=1000, speed=1, fps=30):
         self.last_action = None
         self.max_steps = max_steps
         self.last_action = None
@@ -40,11 +42,13 @@ class ShipEnv(Env):
         return [seed]
 
     def determine_reward(self):
-        self.reward = -0.01  # Small penalty
+
         if game.colliding:
-            self.reward -= 1.0
+            self.reward = -1.0
         if game.goal_reached:
-            self.reward += 1.0
+            self.reward = 1.0
+        else:
+            self.reward = -0.01  # Small penalty
 
     def set_states(self):
         self.states = N_STATES * [-1]
@@ -56,11 +60,6 @@ class ShipEnv(Env):
             self.states[2:4] = [goal.body.position.x, goal.body.position.x]
 
         ship_positions = []
-
-        for ship in game.ships:
-            print(ship.x, ship.y)
-            # print(ship.y)
-
         if len(game.ships) > N_SHIP_POSITIONS:
             print("* WARNING * There are more ships in the game than can be stored by this ship_gym configuration. "
                   "You should increase the N_SHIP_POSITIONS")
@@ -69,16 +68,15 @@ class ShipEnv(Env):
             #   TODO: Figure out the closest few if there are too few state slots available
 
             ship = game.ships[i]
-            print(ship.x, ship.y)
             ship_positions.extend([ship.x, ship.y])
 
-        self.states[4:len(ship_positions)] = ship_positions
+
+        self.states[4:4+len(ship_positions)] = ship_positions
 
     def is_done(self):
         if game.colliding:
             print("OOPS --- COLLISION")
             return True
-
         elif len(game.goals) == 0:
             print("YEAH --- ALL GOALS REACHED")
             return True
@@ -97,7 +95,7 @@ class ShipEnv(Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        print("Step #", self.step_count)
+        # print("Step #", self.step_count)
 
         game.handle_action(action)
         game.update()
@@ -132,3 +130,7 @@ class ShipEnv(Env):
 
         return np.array(self.states)
 
+
+if __name__ == '__main__':
+
+    pass

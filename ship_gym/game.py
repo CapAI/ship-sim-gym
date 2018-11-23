@@ -126,6 +126,7 @@ def add_goal(x, y):
 
 def add_ship(x, y, width, height, color):
     ship = Ship(x, y, width, height, color)
+    # ship.body.angle = 1.57079633 # + 90 degrees
     space.add(ship.body, ship.shape)
 
     return ship
@@ -216,11 +217,15 @@ def collide_ship(x, y, z):
     return True
 
 def collide_goal(arbiter, space, data):
-
+    global goals
     # print("REACHED GOAL")
 
     brick_shape = arbiter.shapes[1] 
     space.remove(brick_shape, brick_shape.body)
+
+    goals = [g for g in goals if g.body is not brick_shape.body]
+    print(len(goals))
+
     global goal_reached
     goal_reached = True
 
@@ -244,7 +249,7 @@ def init(_speed=1, _fps=30):
     
 def reset():
 
-    global space, player, screen, clock, goals
+    global space, player, screen, clock, goals, ships
 
     ships = list()
     goals = list()
@@ -253,17 +258,30 @@ def reset():
         del space
     space = pm.Space()
 
-    player = add_ship(300, 100, 2, 3, pygame.color.THECOLORS["white"])
+    player = add_ship(10, 10, 2, 3, pygame.color.THECOLORS["white"])
     player.shape.collision_type = 0
-    # print("Player added at ", player.body.position)
 
+    # print("Player added at ", player.body.position)
     ships.append(add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
     ships.append(add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
     ships.append(add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
 
-    goals.append(add_goal(300,150))
-    goals.append(add_goal(200,200))
-    goals.append(add_goal(300,500))
+    identity = lambda x : x
+
+    def gen_goals(n, x_func=identity, y_func=identity):
+
+        goals = list()
+        for i in range(n):
+            goals.append(add_goal(x_func(i), y_func(i)))
+
+    # gen_goals(10)
+
+    goals.append(add_goal(300, 150))
+    goals.append(add_goal(300, 200))
+    goals.append(add_goal(300, 250))
+
+    # goals.append(add_goal(200,200))
+    # goals.append(add_goal(300,500))
     
     space.damping = 0.4
 

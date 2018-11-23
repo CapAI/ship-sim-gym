@@ -1,8 +1,10 @@
+import os
 import time
 
+import gym
 import numpy as np
 from baselines.results_plotter import ts2xy
-from stable_baselines.bench import load_results
+from stable_baselines.bench import load_results, Monitor
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import PPO2
@@ -14,7 +16,7 @@ log_dir = "/Users/gerard/Desktop/learning/"
 best_mean_reward = -np.inf
 n_steps = 0
 
-log_step_interval = 1000
+log_step_interval = 100
 
 def callback(_locals, _globals):
     """
@@ -24,6 +26,7 @@ def callback(_locals, _globals):
     """
     global n_steps, best_mean_reward
     # Print stats every 1000 calls
+    # print(1/0)
     if (n_steps + 1) % log_step_interval == 0:
         # Evaluate policy performance
         x, y = ts2xy(load_results(log_dir), 'timesteps')
@@ -42,26 +45,29 @@ def callback(_locals, _globals):
     return False
 
 env = ShipEnv(fps=100, speed=10)
+# env = gym.make('CartPole-v0')
+env = Monitor(env, log_dir, allow_early_resets=True)
 env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
-
-model = PPO2(MlpPolicy, env, verbose=1)
-model.learn(total_timesteps=100000, callback=callback)
 
 np.set_printoptions(suppress=True)
 
-obs = env.reset()
-for i in range(10):
-    # action, _states = model.predict(obs)
-    action = 0
-    obs, reward, done, info = env.step(action)
+model = PPO2(MlpPolicy, env, verbose=0, tensorboard_log=os.path.join(log_dir, "tensorboard"))
+model.learn(total_timesteps=100000, callback=callback)
+model.save("result")
 
-    if done:
-        obs = env.reset()
-
-    print("-" * 20)
-    print("obs = \t", obs)
-    print("reward = \t", reward)
-    print("done = \t", done)
-    print("-" * 20)
+# obs = env.reset()
+# for i in range(10):
+#     # action, _states = model.predict(obs)
+#     action = 0
+#     obs, reward, done, info = env.step(action)
+#
+#     if done:
+#         obs = env.reset()
+#
+#     print("-" * 20)
+#     print("obs = \t", obs)
+#     print("reward = \t", reward)
+#     print("done = \t", done)
+#     print("-" * 20)
 
     # ship_gym.render()
