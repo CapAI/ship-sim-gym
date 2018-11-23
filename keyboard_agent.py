@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/ship_gym python
 from __future__ import print_function
 
 import sys, gym, time
@@ -8,7 +8,7 @@ import sys, gym, time
 #
 # python keyboard_agent.py SpaceInvadersNoFrameskip-v4
 #
-from env.ship_env import ShipEnv
+from ship_gym.ship_env import ShipEnv
 
 env = ShipEnv()
 
