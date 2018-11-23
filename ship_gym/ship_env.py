@@ -21,7 +21,7 @@ class ShipEnv(Env):
     action_space = Discrete(5)
     reward_range = (-1, 1)
 
-    observation_space = Box(low=0, high=255, shape=(N_STATES,), dtype=np.uint8)
+    observation_space = Box(low=0, high=max(game.bounds), shape=(N_STATES,), dtype=np.uint8)
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
@@ -50,6 +50,9 @@ class ShipEnv(Env):
         else:
             self.reward = -0.01  # Small penalty
 
+    def normalized_coords(self, x, y):
+        return x / game.bounds[0], y / game.bounds[1]
+
     def set_states(self):
         self.states = N_STATES * [-1]
 
@@ -57,7 +60,7 @@ class ShipEnv(Env):
         self.states[:2] = [game.player.x, game.player.y]
         goal = game.closest_goal()
         if goal:
-            self.states[2:4] = [goal.body.position.x, goal.body.position.x]
+            self.states[2:4] = [goal.body.position.x, goal.body.position.y]
 
         ship_positions = []
         if len(game.ships) > N_SHIP_POSITIONS:

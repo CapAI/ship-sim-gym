@@ -1,5 +1,7 @@
 import os
 import sys
+
+import numpy as np
 import pygame
 
 from pymunk import Vec2d
@@ -50,7 +52,7 @@ class Ship(object):
 
         #moment = 1000
         body = pm.Body(mass, moment)
-        body.position = Vec2d(x,y)       
+        body.position = Vec2d(x, y)
         shape = pm.Poly(body, points)
         shape.friction = 0.5
         shape.color = color   
@@ -121,6 +123,8 @@ def add_goal(x, y):
     shape.color = pygame.color.THECOLORS["green"]
     space.add(body, shape)
     shape.collision_type = 2
+
+    print("Created goal at ", x, " ", y)
 
     return GameObject(body, shape)
 
@@ -262,9 +266,9 @@ def reset():
     player.shape.collision_type = 0
 
     # print("Player added at ", player.body.position)
-    ships.append(add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
-    ships.append(add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
-    ships.append(add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
+    # ships.append(add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
+    # ships.append(add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
+    # ships.append(add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
 
     identity = lambda x : x
 
@@ -274,11 +278,16 @@ def reset():
         for i in range(n):
             goals.append(add_goal(x_func(i), y_func(i)))
 
-    # gen_goals(10)
 
-    goals.append(add_goal(300, 150))
-    goals.append(add_goal(300, 200))
-    goals.append(add_goal(300, 250))
+
+    for i in range(1):
+        x = np.random.randint(30, bounds[0] - 30)
+        y = np.random.randint(30, bounds[1] - 30)
+        goals.append(add_goal(x,y))
+
+    # goals.append(add_goal(300, 150))
+    # goals.append(add_goal(300, 200))
+    # goals.append(add_goal(300, 250))
 
     # goals.append(add_goal(200,200))
     # goals.append(add_goal(300,500))

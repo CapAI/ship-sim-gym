@@ -44,8 +44,7 @@ def callback(_locals, _globals):
     n_steps += 1
     return False
 
-env = ShipEnv(fps=100, speed=10)
-# env = gym.make('CartPole-v0')
+env = ShipEnv(fps=1, speed=1)
 env = Monitor(env, log_dir, allow_early_resets=True)
 env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
 
