@@ -5,7 +5,10 @@
 #!/usr/bin/env python3
 
 import gym
+
+# This will add it to the registry!
 import ship_gym
+
 from mpi4py import MPI
 from baselines.common import set_global_seeds
 from baselines import bench
@@ -27,7 +30,7 @@ def train(num_timesteps, seed):
         logger.configure(format_strs=[])
     workerseed = seed + 10000 * MPI.COMM_WORLD.Get_rank() if seed is not None else None
     set_global_seeds(workerseed)
-    
+
     def policy_fn(name, ob_space, ac_space): #pylint: disable=W0613
         return cnn_policy.CnnPolicy(name=name, ob_space=ob_space, ac_space=ac_space)
 

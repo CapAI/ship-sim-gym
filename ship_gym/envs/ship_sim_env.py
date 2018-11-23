@@ -8,7 +8,7 @@ import numpy as np
 
 SIZE = 128
 
-class ShipEnv(gym.Env):
+class ShipEnv2(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     action_space = Discrete(5) # nothing, up, left, right, back
@@ -68,7 +68,7 @@ class ShipEnv(gym.Env):
         Returns: observation (object): the initial observation of the
             space.
         """
-        pass
+        return np.array([])
 
     def render(self, mode='human'):
         """Renders the environment.
