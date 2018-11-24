@@ -122,7 +122,7 @@ def add_goal(x, y):
     space.add(body, shape)
     shape.collision_type = 2
 
-    print("Created goal at ", x, " ", y)
+    # 	print("Created goal at ", x, " ", y)
 
     return GameObject(body, shape)
 
@@ -226,7 +226,6 @@ def collide_goal(arbiter, space, data):
     space.remove(brick_shape, brick_shape.body)
 
     goals = [g for g in goals if g.body is not brick_shape.body]
-    print(len(goals))
 
     global goal_reached
     goal_reached = True
@@ -287,13 +286,13 @@ def reset():
             goals.append(add_goal(x_func(i), y_func(i)))
 
     # goals = grid_goals(100)
-    N = 0
-    # for i in range(N):
-    #     # x = np.random.randint(30, bounds[0] - 30)
-    #     # y = np.random.randint(30, bounds[1] - 30)
-    #     x = 0
-    #     y = 100
-    #     goals.append(add_goal(x, y))
+    N = 1
+    for i in range(N):
+        x = np.random.randint(30, bounds[0] - 30)
+        y = np.random.randint(30, bounds[1] - 30)
+        # x = 0
+        # y = 100
+        goals.append(add_goal(x, y))
 
     goals.append(add_goal(player.x, player.y + 40))
     # goals.append(add_goal(300, 200))

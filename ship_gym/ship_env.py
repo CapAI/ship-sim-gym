@@ -80,7 +80,7 @@ class ShipEnv(Env):
 
     def is_done(self):
         if game.colliding:
-            print("OOPS --- COLLISION")
+            # print("OOPS --- COLLISION")
             return True
         elif len(game.goals) == 0:
             print("YEAH --- ALL GOALS REACHED")
@@ -88,11 +88,17 @@ class ShipEnv(Env):
 
         # TODO: Untested x or y bounds because perfect square ...
         if game.player.x < 0 or game.player.x > game.bounds[0]:
-            print("X out of bounds")
+            # print("X out of bounds")
             return True
         elif game.player.y < 0 or game.player.y > game.bounds[1]:
-            print("Y out of bounds")
+            # print("Y out of bounds")
             return True
+
+        if self.step_count >= self.max_steps:
+        	print("MAX STEPS")
+        	return True
+
+        return False
 
 
     def step(self, action):
@@ -122,7 +128,7 @@ class ShipEnv(Env):
         return out
 
     def reset(self):
-        print("ShipEnv Reset")
+        # print("ShipEnv Reset")
         game.reset()
 
         self.last_action = None
