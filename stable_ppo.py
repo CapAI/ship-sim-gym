@@ -61,6 +61,10 @@ def callback(_locals, _globals):
 	return False
 
 
+game_fps=1000
+game_speed=30
+max_steps=1000
+
 def make_env(rank, seed=0):
 	"""
 	Utility function for multiprocessed env.
@@ -72,16 +76,15 @@ def make_env(rank, seed=0):
 	"""
 
 	def _init():
-		env = ShipEnv(fps=100, speed=20)
+		env = ShipEnv(fps=game_fps, speed=game_speed, max_steps=max_steps)
 		env.seed(seed + rank)
 		# env = Monitor(env, log_dir, allow_early_resets=True)
 
 		# Place window
-
 		x = rank % 4 * 500
 		y = rank % 2 * 500
 
-		os.environ['SDL_VIDEO_WINDOW_POS'] = str(x) + "," + str(y)
+		# os.environ['SDL_VIDEO_WINDOW_POS'] = str(x) + "," + str(y)
 
 		return env
 
@@ -101,13 +104,14 @@ np.set_printoptions(suppress=True)
 tb_root_dir = os.path.join(log_dir, f"tensorboard_{int(time.time())}")
 
 ''' SET UP YOUR HYPERPARAMETERS HERE'''
-lrs = [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2]
+# lrs = [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2]
+lrs = [1.0e-5, 1.0e-4, 1.0e-3]
 # lrs = [1.0e-5, 1.0e-4, 1.0e-3]
 n_steps = int(1e6)
 
 for i in range(3):
 	for lr in lrs:
-
+		
 		start_t = time.time()
 
 		tb_dir = os.path.join(tb_root_dir, f"ppo2_{i}_lr={lr}")

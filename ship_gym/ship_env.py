@@ -40,6 +40,10 @@ class ShipEnv(Env):
        
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+
+        # Important to actually seed it!!! I thought above would work but it's not enough
+        np.random.seed(seed)
+
         return [seed]
 
     def determine_reward(self):

@@ -286,7 +286,7 @@ def reset():
             goals.append(add_goal(x_func(i), y_func(i)))
 
     # goals = grid_goals(100)
-    N = 1
+    N = 10
     for i in range(N):
         x = np.random.randint(30, bounds[0] - 30)
         y = np.random.randint(30, bounds[1] - 30)
