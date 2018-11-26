@@ -4,7 +4,7 @@ import gym
 import ship_gym
 
 def main():
-    # env = UnityEnv("./envs/GridWorld", 0, use_visual=True)
+    # ship_gym = UnityEnv("./envs/GridWorld", 0, use_visual=True)
 
 
     env = gym.make('ShipSim-v0')
