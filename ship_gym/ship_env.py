@@ -7,14 +7,8 @@ from gym import Env
 from gym.spaces import Discrete, Box
 from gym.utils import seeding
 
-from ship_gym import game
-
-N_SHIP_POSITIONS = 0
-HISTORY_SIZE = 2
-
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
-N_STATES = (N_SHIP_POSITIONS + 1 + 1) * 2
-N_TOTAL_STATES = HISTORY_SIZE * N_STATES
+DEFAULT_STATE_VAL = -1
 
 class ShipEnv(Env):
 
@@ -22,19 +16,28 @@ class ShipEnv(Env):
     action_space = Discrete(5)
     reward_range = (-1, 1)
 
-    observation_space = Box(low=0, high=max(game.bounds), shape=(N_TOTAL_STATES,), dtype=np.uint8)
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
-    def __init__(self, max_steps=200, speed=1, fps=30):
+    def __init__(self, ship_game, max_steps=200, n_ship_track=2, history_size=2):
+        if n_ship_track < 0:
+            raise ValueError("n_ship_track must be non-negative")
+        if history_size < 1:
+            raise ValueError("history_size must be greater than zero")
+
         self.last_action = None
         self.max_steps = max_steps
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
+        self.game = ship_game
 
-        game.init(_speed=speed, _fps=fps)
+        self.n_ship_track = n_ship_track
+        self.history_size = history_size
+        self.n_states = (n_ship_track + 1 + 1) * 2
+        self.states_history = self.n_states * history_size
+        self.observation_space = Box(low=0, high=max(self.game.bounds), shape=(self.n_states,), dtype=np.uint8)
 
         print(" *** SHIP-GYM INITIALIZED *** ")
        
@@ -48,34 +51,47 @@ class ShipEnv(Env):
 
     def determine_reward(self):
 
-        if game.colliding:
+        if self.game.colliding:
             self.reward = -1.0
-        if game.goal_reached:
+        if self.game.goal_reached:
             self.reward = 1.0
         else:
             self.reward = -0.01  # Small penalty
 
-    def normalized_coords(self, x, y):
-        return x / game.bounds[0], y / game.bounds[1]
+    def _normalized_coords(self, x, y):
+        return x / self.game.bounds[0], y / self.game.bounds[1]
 
-    def add_states(self):
-        states = N_STATES * [-1]
+    def __add_states(self):
+        '''
+        Push back some new state information for the current timestep onto the FIFO queue for all history timesteps
+        it keeps track of.
+
+        Layout of a single time step state is like this:
+
+        Px Py Gx Gy S1x S1y S2x S2y S3x S3y ... SNx SNy
+
+        Where N is the number of ships its tracking
+
+        :return:
+        '''
+
+        states = self.n_states * [-1]
 
         # Myself
-        states[:2] = [game.player.x, game.player.y]
-        goal = game.closest_goal()
+        states[:2] = [self.game.player.x, self.game.player.y]
+        goal = self.game.closest_goal()
         if goal:
             states[2:4] = [goal.body.position.x, goal.body.position.y]
 
         ship_positions = []
-        if len(game.ships) > N_SHIP_POSITIONS:
-            print("* WARNING * There are more ships in the game than can be stored by this ship_gym configuration. "
-                  "You should increase the N_SHIP_POSITIONS")
+        # if len(self.game.ships) > self.n_ship_track:
+        #     print("* WARNING * There are more ships in the self.game than can be stored by this ship_gym configuration. "
+        #           "You should increase the N_SHIP_POSITIONS")
 
-        for i in range(min(len(game.ships), N_SHIP_POSITIONS)):
+        for i in range(min(len(self.game.ships), self.n_ship_track)):
             #   TODO: Figure out the closest few if there are too few state slots available
 
-            ship = game.ships[i]
+            ship = self.game.ships[i]
             ship_positions.extend([ship.x, ship.y])
 
 
@@ -83,24 +99,24 @@ class ShipEnv(Env):
         self.states.extend(states)
 
     def is_done(self):
-        if game.colliding:
+        if self.game.colliding:
             # print("OOPS --- COLLISION")
             return True
-        elif len(game.goals) == 0:
+        elif len(self.game.goals) == 0:
             print("YEAH --- ALL GOALS REACHED")
             return True
 
         # TODO: Untested x or y bounds because perfect square ...
-        if game.player.x < 0 or game.player.x > game.bounds[0]:
+        if self.game.player.x < 0 or self.game.player.x > self.game.bounds[0]:
             # print("X out of bounds")
             return True
-        elif game.player.y < 0 or game.player.y > game.bounds[1]:
+        elif self.game.player.y < 0 or self.game.player.y > self.game.bounds[1]:
             # print("Y out of bounds")
             return True
 
         if self.step_count >= self.max_steps:
-        	print("MAX STEPS")
-        	return True
+            print("MAX STEPS")
+            return True
 
         return False
 
@@ -110,12 +126,12 @@ class ShipEnv(Env):
 
         # print("Step #", self.step_count)
 
-        game.handle_action(action)
-        game.update()
-        game.render() # Also does the actual game progression
+        self.game.handle_action(action)
+        self.game.update()
+        self.game.render()
 
         self.determine_reward()
-        self.add_states()
+        self.__add_states()
         self.step_count += 1
 
         done = self.is_done()
@@ -131,17 +147,18 @@ class ShipEnv(Env):
 
         return out
 
-    def reset(self):
-        # print("ShipEnv Reset")
-        game.reset()
+    def reset(self, spawn_point=(10,10)):
+        print("ShipEnv Reset")
+        self.game.reset(spawn_point=spawn_point)
 
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
 
-        self.states = deque([-1] * N_TOTAL_STATES, maxlen=N_TOTAL_STATES)
-        self.add_states()
+        n = self.n_states * self.history_size
+        self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
+        self.__add_states()
 
         return np.array(self.states)
 

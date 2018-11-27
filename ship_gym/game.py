@@ -8,30 +8,7 @@ from pymunk import Vec2d
 import pymunk as pm
 import pymunk.pygame_util
 
-space = None
-bounds = (500, 500)
-
-SHIP_TEMPLATE = [(0,0), (0,10), (5,15), (10,10), (10,0)]
-screen = None
-clock = None
-player = None
-
-ships = list()
-goals = list()
-
-#TODO: Change this to some event enum
-colliding = False
-goal_reached = False
-frame_counter = 0
-
-#game_frame_dir = "/Users/gerard/Desktop/frames"
-#os.makedirs(game_frame_dir, exist_ok=True)
-
-base_dt = 0.1
-
-def invert_p(p):
-    ''' Because in screen Y=0 is at the top or some shit like that '''
-    return Vec2d(p[0], bounds[1] - p[1])
+SHIP_TEMPLATE = [(0, 0), (0, 10), (5, 15), (10, 10), (10, 0)]
 
 
 class GameObject(object):
@@ -39,6 +16,17 @@ class GameObject(object):
     def __init__(self, body, shape):
         self.body = body
         self.shape = shape
+
+    def __repr__(self):
+        return f"Goal({self.x}, {self.y})"
+
+    @property
+    def x(self):
+        return self.body.position.x
+
+    @property
+    def y(self):
+        return self.body.position.y
 
 class Ship(object):
 
@@ -80,13 +68,17 @@ class Ship(object):
         
 
     def draw_force(self):
-        p1 = self.body.local_to_world(self.point_of_thrust)
-        p2 = self.body.local_to_world(self.point_of_thrust - self.force_vector)
+        pass
 
-        p1 = invert_p(p1)
-        p2 = invert_p(p2)
+        ''' CONTENT REMOVED, IT REQUIRED ACCESS TO GAME BOUNDS, IMPOSSIBLE NOW SINCE ITS A CLASS '''
 
-        pygame.draw.line(screen, (0, 255, 0), p1, p2)
+        # p1 = self.body.local_to_world(self.point_of_thrust)
+        # p2 = self.body.local_to_world(self.point_of_thrust - self.force_vector)
+        #
+        # # p1 = self.invert_p(p1)
+        # # p2 = invert_p(p2)
+        #
+        # # pygame.draw.line(screen, (0, 255, 0), p1, p2)
 
     def move_backward(self):
         self.body.apply_force_at_local_point((0, -30), (0, -5))
@@ -108,234 +100,242 @@ class Ship(object):
         self.draw_force()
 
 
+DEFAULT_BOUNDS = (500, 500)
 
-def add_goal(x, y):
-    """Add a ball to the given space at a random position"""
-    mass = 1
-    radius = 5
-    inertia = pm.moment_for_circle(mass, 0, radius, (0,0))
-    body = pm.Body(mass, inertia)
-    
-    body.position = x, y
-    shape = pm.Circle(body, radius, (0,0))
-    shape.color = pygame.color.THECOLORS["green"]
-    space.add(body, shape)
-    shape.collision_type = 2
-
-    # 	print("Created goal at ", x, " ", y)
-
-    return GameObject(body, shape)
-
-def add_ship(x, y, width, height, color):
-    ship = Ship(x, y, width, height, color)
-    # ship.body.angle = 1.57079633 # + 90 degrees
-    space.add(ship.body, ship.shape)
-
-    return ship
-
-def get_screen():
-    return pygame.surfarray.array3d(screen)
-
-def handle_action(action):
-    if action == 0:
-        # print("W pressed : forwards")
-        player.move_forward()
-    elif action == 1:
-        # print("S pressed : backwards")
-        player.move_backward()
-    elif action == 2:
-        # print("A pressed : left")
-        player.rotate(-10)
-    elif action == 3:
-        # print("D pressed : right")
-        player.rotate(+10)
-    elif action == 4:
-        # print("Do nothing ... ")
-        pass
-
-def handle_input():
-    """
-    Maps key inputs to actions (via handle_action)
-    """
-
-     # Handle key strokes
-    for event in pygame.event.get():
-        # print(event.key)
-        if event.type == pygame.QUIT:
-            sys.exit(0)
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                sys.exit(0)
-
-            elif event.key == pygame.K_w:
-                # print("W pressed")
-                handle_action(0)
-            elif event.key == pygame.K_s:
-                # print("S pressed")
-                handle_action(1)
-            elif event.key == pygame.K_a:
-                # print("A pressed")
-                handle_action(2)
-            elif event.key == pygame.K_d:
-                # print("D pressed")
-                handle_action(3)
-            elif event.key == pygame.K_r:
-                reset()
-
-
-def update():
-    global goal_reached, colliding
-
-    goal_reached = False
-    colliding = False
-
-    handle_input()
-
-    space.step(speed * base_dt)
-
-    clock.tick(fps)
-
-def render():
-    global frame_counter
-    # print(" GAME RENDER !!!!")
-
-    screen.fill((0, 0, 200))
-
-    draw_options = pm.pygame_util.DrawOptions(screen)
-    space.debug_draw(draw_options)
-
-    pygame.display.flip()
-
-    #pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
-    frame_counter += 1
-    
-
-def collide_ship(x, y, z):
-    # print("COLLIDE WITH SHIP")
-    global colliding
-    colliding = True
-
-    return True
-
-def collide_goal(arbiter, space, data):
-    global goals
-    # print("REACHED GOAL")
-
-    brick_shape = arbiter.shapes[1] 
-    space.remove(brick_shape, brick_shape.body)
-
-    goals = [g for g in goals if g.body is not brick_shape.body]
-
-    global goal_reached
-    goal_reached = True
-
-    return False
-
-def init(_speed=1, _fps=30):
-    global space, player, screen, clock, speed, fps
-
-
-    speed = _speed
-    fps = _fps
-
-    print("Init game at speed = ", speed)
-    print("Init game at fps = ", fps)
-    pygame.init()
-    
-    screen = pygame.display.set_mode(bounds)
-    pygame.display.set_caption("Ship Sim Gym")
-    pygame.key.set_repeat(10, 10)
-    clock = pygame.time.Clock()
-    
-def reset():
-
-    global space, player, screen, clock, goals, ships
+class ShipGame():
 
     ships = list()
     goals = list()
 
-    if space is not None:
-        del space
-    space = pm.Space()
+    # TODO: Change this to some event enum
+    colliding = False
+    frame_counter = 0
 
-    player = add_ship(10, 10, 2, 3, pygame.color.THECOLORS["white"])
-    player.shape.collision_type = 0
+    # game_frame_dir = "/Users/gerard/Desktop/frames"
+    # os.makedirs(game_frame_dir, exist_ok=True)
 
-    # print("Player added at ", player.body.position)
-    # ships.append(add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
-    # ships.append(add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
-    # ships.append(add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
+    base_dt = 0.1
 
-    identity = lambda x : x
+    def __init__(self, speed=1, fps=30, bounds=DEFAULT_BOUNDS):
 
-    def grid_goals(n):
-        _goals = []
+        self.speed = speed
+        self.fps = fps
+        self.bounds = bounds
+        self.screen = pygame.display.set_mode(bounds)
+        self.clock = pygame.time.Clock()
+        self.goal_reached = False
+        self.colliding = False
 
-        for x in range(int(n ** (1/2))):
-            for y in range(int(n ** (1/2))):
-                _goals.append(add_goal(x*bounds[0], y*bounds[1]))
+        pygame.init()
+        pygame.display.set_caption("Ship Sim Gym")
+        # pygame.key.set_repeat(10, 10)
 
-        return _goals
+        print("Init game at speed = ", speed)
+        print("Init game at fps = ", fps)
+
+        self.reset()
+
+    def invert_p(self, p):
+        ''' Because in screen Y=0 is at the top or some shit like that '''
+        return Vec2d(p[0], self.bounds[1] - p[1])
+
+    def add_goal(self, x, y):
+        """Add a ball to the given space at a random position"""
+        mass = 1
+        radius = 5
+        inertia = pm.moment_for_circle(mass, 0, radius, (0,0))
+        body = pm.Body(mass, inertia)
+
+        body.position = x, y
+        shape = pm.Circle(body, radius, (0,0))
+        shape.color = pygame.color.THECOLORS["green"]
+        self.space.add(body, shape)
+        shape.collision_type = 2
+
+        goal = GameObject(body, shape)
+        self.goals.append(goal)
+
+        print("Created goal at ", x, " ", y)
+        print(f"There are now {len(self.goals)} goals in the game!")
+
+        return goal
+
+    def add_ship(self, x, y, width, height, color):
+        """
+        Creates a new Ship instance and adds a shape and body to the pymunk space
+        :param self:
+        :param x:
+        :param y:
+        :param width:
+        :param height:
+        :param color:
+        :return:
+        """
+        ship = Ship(x, y, width, height, color)
+        # ship.body.angle = 1.57079633 # + 90 degrees
+        self.space.add(ship.body, ship.shape)
+
+        return ship
+
+    def get_screen(self):
+        return pygame.surfarray.array3d(self.screen)
+
+    def handle_action(self, action):
+        if action == 0:
+            # print("W pressed : forwards")
+            self.player.move_forward()
+        elif action == 1:
+            # print("S pressed : backwards")
+            self.player.move_backward()
+        elif action == 2:
+            # print("A pressed : left")
+            self.player.rotate(-10)
+        elif action == 3:
+            # print("D pressed : right")
+            self.player.rotate(+10)
+        elif action == 4:
+            # print("Do nothing ... ")
+            pass
+
+    def handle_input(self):
+        """
+        Maps key inputs to actions (via handle_action)
+        """
+
+         # Handle key strokes
+        for event in pygame.event.get():
+            # print(event.key)
+            if event.type == pygame.QUIT:
+                sys.exit(0)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit(0)
+
+                elif event.key == pygame.K_w:
+                    # print("W pressed")
+                    self.handle_action(0)
+                elif event.key == pygame.K_s:
+                    # print("S pressed")
+                    self.handle_action(1)
+                elif event.key == pygame.K_a:
+                    # print("A pressed")
+                    self.handle_action(2)
+                elif event.key == pygame.K_d:
+                    # print("D pressed")
+                    self.handle_action(3)
+                elif event.key == pygame.K_r:
+                    self.reset()
 
 
-    def gen_goals(n, x_func=identity, y_func=identity):
+    def update(self):
+        self.colliding = False
+        self.goal_reached = False
 
-        goals = list()
-        for i in range(n):
-            goals.append(add_goal(x_func(i), y_func(i)))
+        self.handle_input()
+        self.space.step(self.speed * self.base_dt)
+        self.clock.tick(self.fps)
 
-    # goals = grid_goals(100)
-    N = 10
-    for i in range(N):
-        x = np.random.randint(30, bounds[0] - 30)
-        y = np.random.randint(30, bounds[1] - 30)
-        # x = 0
-        # y = 100
-        goals.append(add_goal(x, y))
+    def render(self):
 
-    goals.append(add_goal(player.x, player.y + 40))
-    # goals.append(add_goal(300, 200))
-    # goals.append(add_goal(300, 250))
+        self.screen.fill((0, 0, 200))
 
-    # goals.append(add_goal(200,200))
-    # goals.append(add_goal(300,500))
-    
-    space.damping = 0.4
+        draw_options = pm.pygame_util.DrawOptions(self.screen)
+        self.space.debug_draw(draw_options)
 
-    h = space.add_collision_handler(0, 1)
-    h.begin = collide_ship
+        pygame.display.flip()
 
-    goal_agent_col = space.add_collision_handler(0, 2)
-    goal_agent_col.begin = collide_goal
-
-def closest_goal():
+        #pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
+        self.frame_counter += 1
 
 
-    if len(goals):
-        min_goal = goals[0]
-        min_distance = min_goal.body.position.get_distance(player.body.position)
-        for goal in goals[1:]:
+    def collide_ship(self, x, y, z):
+        """
+        Ship collision callback for when the player ship hits another NPC ship
+        :param self:
+        :param x:
+        :param y:
+        :param z:
+        :return:
+        """
+        self.colliding = True
+        return True
 
-            dist = goal.body.position.get_distance(player.body.position)
-            if dist < min_distance:
-                min_distance = dist
-                min_goal = goal
+    def collide_goal(self, arbiter, space, data):
+        print(" !!! REACHED GOAL !!! ")
 
-        return min_goal
-    return None
+        brick_shape = arbiter.shapes[1]
+        space.remove(brick_shape, brick_shape.body)
+        self.goal_reached = True
+
+        self.goals = [g for g in self.goals if g.body is not brick_shape.body]
+
+        return False
+
+    def create_goals(self):
+
+        N = 10
+        for i in range(N):
+            x = np.random.randint(30, self.bounds[0] - 30)
+            y = np.random.randint(30, self.bounds[1] - 30)
+            self.goals.append(self.add_goal(x, y))
+            self.goals.append(self.add_goal(self.player.x, self.player.y + 40))
+
+    DEFAULT_SPAWN_POINT = Vec2d(10, 20)
+    def reset(self, spawn_point=DEFAULT_SPAWN_POINT):
+
+        if not isinstance(spawn_point, Vec2d):
+            spawn_point = Vec2d(spawn_point)
+
+        self.ships = list()
+        self.goals = list()
+
+        self.space = pm.Space()
+        self.space.damping = 0.4
+
+        self.player = self.add_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
+        self.player.shape.collision_type = 0
+
+        self.setup_collision_handlers()
+
+    def add_default_traffic(self):
+        self.ships.append(self.add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
+        self.ships.append(self.add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
+        self.ships.append(self.add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
+
+    def setup_collision_handlers(self):
+        h = self.space.add_collision_handler(0, 1)
+        h.begin = self.collide_ship
+
+        goal_agent_col = self.space.add_collision_handler(0, 2)
+        goal_agent_col.begin = self.collide_goal
+
+    def closest_goal(self):
+        if len(self.goals):
+            min_goal = self.goals[0]
+            min_distance = min_goal.body.position.get_distance(self.player.body.position)
+            for goal in self.goals[1:]:
+
+                dist = goal.body.position.get_distance(self.player.body.position)
+                if dist < min_distance:
+                    min_distance = dist
+                    min_goal = goal
+
+            print("Min goal = ", min_goal)
+            return min_goal
+        return None
 
 
 
 def main():
 
-    init()
-    reset()
+    g = ShipGame()
+    g.reset()
 
     while True:
 
-        update()
-        render()
+        g.update()
+        g.render()
 
         # print(f"My position = \t{player.x},{player.y}")
 
