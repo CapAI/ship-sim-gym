@@ -112,3 +112,6 @@ dmypy.json
 .DS_Store
 .idea/
 *.pkl
+
+models/
+logs/

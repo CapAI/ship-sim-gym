@@ -8,7 +8,7 @@ from stable_baselines.bench import load_results, Monitor
 from stable_baselines.common import set_global_seeds
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines import PPO2
+from stable_baselines import PPO2, ACER
 
 import time
 
@@ -16,20 +16,11 @@ from ship_gym.game import ShipGame
 from ship_gym.ship_env import ShipEnv
 from datetime import datetime
 
-# log_dir = os.path.expanduser('~/logs/learning')
+from tqdm import tqdm
+
 
 log_dir = "logs/learning"
 model_dir = "models"
-
-os.makedirs(log_dir, exist_ok=True)
-os.makedirs(model_dir, exist_ok=True)
-
-best_mean_reward = -np.inf
-n_steps = 0
-
-log_step_interval = 100
-
-t_last = time.time()
 
 def callback(_locals, _globals):
 	"""
@@ -59,28 +50,7 @@ def callback(_locals, _globals):
 	n_steps += 1
 	return False
 
-
-np.set_printoptions(suppress=True)
-
-tb_root_dir = os.path.join(log_dir, "tensorboard", str(int(time.time())))
-
-''' SET UP YOUR (HYPER)PARAMETERS HERE'''
-
-lrs = [1.0e-3, 1.0e-4, 1.0e-5]
-
-max_goals = 10
-max_steps = int(1e7)
-
-game_fps = 1000
-game_speed = 30
-bounds = (800,800)
-
-# Setting it to the number of CPU's you have is usually optimal
-num_cpu = 8
-n_goals = 1
-n_obstacles = 0
-
-def make_env(rank, seed=0):
+def make_env(rank, bounds, game_fps, game_speed, max_steps, seed=0):
 		"""
 		Utility function for multiprocessed env.
 
@@ -101,47 +71,87 @@ def make_env(rank, seed=0):
 		set_global_seeds(seed)
 		return _init
 
-env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
-
 def get_model_path(n_goals, lr, n_obstacles=0):
 	return os.path.join(model_dir, f"result_g{n_goals}_o{n_obstacles}_lr{lr}")
 
-for n_goal in range(1, max_goals):
+def train(model_cls, env, n_goal, n_obstacles, lr, steps):
 
-	# Update envs to use the right number of goals. <3 this function
-	env.set_attr('n_goals', n_goal)
+	tb_root_dir = os.path.join(log_dir, "tensorboard", str(int(time.time())))
+	start_t = time.time()
 
-	for lr in lrs:
-		start_t = time.time()
+	tb_dir = os.path.join(tb_root_dir, f"acer_lr{lr}_g{n_goal}_o{n_obstacles}")
+	# model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
+	model = model_cls(MlpPolicy, env, learning_rate=lr, verbose=1, tensorboard_log=tb_dir)
 
-		tb_dir = os.path.join(tb_root_dir, f"ppo2_lr{lr}_g{n_goal}_o{n_obstacles}")
-		model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
-		steps = int(max_steps / max_goals)
+	if n_goal > 1:
+		# Previous model?
 
-		print(f"""
+		path = get_model_path(n_goal-1, lr)
+		model.load(path)
+
+		print(f"Model '{path}' loaded!")
+
+	model.learn(total_timesteps=steps, log_interval=1000)
+
+	end_t = time.time()
+	elapsed = end_t - start_t
+
+	print(f"Trained {steps} steps in {elapsed} seconds")
+	print(f"Speed = {steps / (elapsed / 60)} steps/min")
+	print()
+
+	path = get_model_path(n_goal, lr)
+	model.save(path)
+
+def main():
+
+	os.makedirs(log_dir, exist_ok=True)
+	os.makedirs(model_dir, exist_ok=True)
+
+	np.set_printoptions(suppress=True)
+
+	''' SET UP YOUR (HYPER)PARAMETERS HERE'''
+
+	lrs = [1.0e-3, 1.0e-4, 1.0e-5]
+
+	max_goals = 10
+	max_steps = 1000
+
+	game_fps = 1000
+	game_speed = 30
+	bounds = (800,800)
+
+	# Setting it to the number of CPU's you have is usually optimal
+	num_cpu = 8
+	n_goals = 1
+	n_obstacles = 0
+	total_train_steps = 1e7
+
+	env = SubprocVecEnv([make_env(i, bounds, game_fps, game_speed, max_steps) for i in range(num_cpu)])
+
+	for n_goal in tqdm(range(1, max_goals)):
+		# Update envs to use the right number of goals. <3 this function
+		env.set_attr('n_goals', n_goal)
+		steps = int(total_train_steps / max_goals)
+
+		for lr in lrs:
+			print(f"""
 Started training at {datetime.now()}
 ------------------------------------------------
 Training Steps 	:\t {steps} / {max_steps}
 Number of goals :\t {n_goal} / {max_goals}
 Learning rate   :\t {lr} 
-		""")
+			""")
+			train(ACER, env, n_goals, 0, lr, steps)
 
-		if n_goal > 1:
-			# Previous model?
+	print("*" * 30)
+	print(" "*10,"     DONE!     ", " "*10)
+	print(" ", datetime.now(), " ")
+	print("*" * 30)
 
-			path = get_model_path(n_goal-1, lr)
-			model.load(path)
 
-			print(f"Model '{path}' loaded!")
 
-		model.learn(total_timesteps=steps, log_interval=1000)
 
-		end_t = time.time()
-		elapsed = end_t - start_t
 
-		print(f"Trained {steps} steps in {elapsed} seconds")
-		print(f"Speed = {steps / (elapsed / 60)} steps/min")
-		print()
-
-		path = get_model_path(n_goal, lr)
-		model.save(path)
+if __name__ == '__main__':
+	main()
