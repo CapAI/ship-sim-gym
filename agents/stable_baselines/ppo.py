@@ -65,65 +65,72 @@ def callback(_locals, _globals):
 
 game_fps = 1000
 game_speed = 30
-max_steps = 1000
 
-bounds = (500,500)
-
-def make_env(rank, seed=0):
-    """
-    Utility function for multiprocessed env.
-
-    :param env_id: (str) the environment ID
-    :param num_env: (int) the number of environment you wish to have in subprocesses
-    :param seed: (int) the inital seed for RNG
-    :param rank: (int) index of the subprocess
-    """
-
-    def _init():
-        env = ShipEnv(ShipGame(fps=game_fps, speed=game_speed, bounds=bounds), max_steps=max_steps)
-        env.seed(seed + rank)
-        # env = Monitor(env, log_dir, allow_early_resets=True)
-
-        # Place window (DOESNT SEEM TO WORK)
-        # x = rank % 4 * 500
-        # y = rank % 2 * 500
-        # os.environ['SDL_VIDEO_WINDOW_POS'] = str(x) + "," + str(y)
-
-        return env
-
-    set_global_seeds(seed)
-    return _init
+bounds = (1000,1000)
 
 
 # env = ShipEnv(fps=10000, speed=20)
 
 # Setting it to the number of CPU's you have is usually optimal
-num_cpu = 8
-env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
-# 
-# env = DummyVecEnv([lambda: env])  # The algorithms require a vectorized environment to run
+num_cpu = 1
 
 np.set_printoptions(suppress=True)
 
 tb_root_dir = os.path.join(log_dir, f"tensorboard_{int(time.time())}")
 
 ''' SET UP YOUR HYPERPARAMETERS HERE'''
-# lrs = [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2]
-lrs = [1.0e-5, 1.0e-4, 1.0e-3]
-# lrs = [1.0e-5, 1.0e-4, 1.0e-3]
-n_steps = int(1e6)
 
-for i in range(3):
+lrs = [1.0e-5, 1.0e-4, 1.0e-3]
+
+max_goals = 10
+max_steps = int(1e6)
+
+def get_model_path(n_goals, lr):
+    return os.path.join(model_dir, f"result_g{n_goals}_lr{lr}")
+
+for n_goal in range(1, max_goals):
+
+    def make_env(rank, n_goals, seed=0):
+        """
+        Utility function for multiprocessed env.
+
+        :param n_goals:
+        :param env_id: (str) the environment ID
+        :param num_env: (int) the number of environment you wish to have in subprocesses
+        :param seed: (int) the inital seed for RNG
+        :param rank: (int) index of the subprocess
+        """
+
+        def _init():
+            env = ShipEnv(ShipGame(fps=game_fps, speed=game_speed, bounds=bounds), max_steps=max_steps, n_goals=n_goals)
+            env.seed(seed + rank)
+            # env = Monitor(env, log_dir, allow_early_resets=True)
+
+            return env
+
+        set_global_seeds(seed)
+        return _init
+
     for lr in lrs:
         start_t = time.time()
 
-        tb_dir = os.path.join(tb_root_dir, f"ppo2_{i}_lr={lr}")
+        env = SubprocVecEnv([make_env(i, n_goal) for i in range(num_cpu)])
+
+        tb_dir = os.path.join(tb_root_dir, f"ppo2_lr{lr}_g{n_goal}")
         model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
-        # model.learn(total_timesteps=n_steps, callback=callback)
-        model.learn(total_timesteps=n_steps)
-        model.save(os.path.join(model_dir, "result_" + str(lr)))
+
+        if n_goal > 1:
+            # Previous model?
+
+            path = get_model_path(n_goal-1, lr)
+            model.load(path)
+
+        model.learn(total_timesteps=max_steps / n_goal, log_interval=1000)
 
         end_t = time.time()
         elapsed = end_t - start_t
         print(f"Trained {n_steps} steps in {elapsed} seconds")
         print(f"Speed = {n_steps / (elapsed / 60)} steps/min")
+
+        path = get_model_path(n_goal, lr)
+        model.save(path)

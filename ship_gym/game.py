@@ -272,14 +272,6 @@ class ShipGame():
 
         return False
 
-    def create_goals(self):
-
-        N = 10
-        for i in range(N):
-            x = np.random.randint(30, self.bounds[0] - 30)
-            y = np.random.randint(30, self.bounds[1] - 30)
-            self.goals.append(self.add_goal(x, y))
-            self.goals.append(self.add_goal(self.player.x, self.player.y + 40))
 
     DEFAULT_SPAWN_POINT = Vec2d(10, 20)
     def reset(self, spawn_point=DEFAULT_SPAWN_POINT):

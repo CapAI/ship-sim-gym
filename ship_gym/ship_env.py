@@ -8,6 +8,8 @@ from gym.spaces import Discrete, Box
 from gym.utils import seeding
 
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
+from pymunk import Vec2d
+
 DEFAULT_STATE_VAL = -1
 
 STEP_PENALTY = -0.01
@@ -21,7 +23,7 @@ class ShipEnv(Env):
     # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
 
     # TODO: Derive the discrete actions
-    def __init__(self, ship_game, max_steps=200, n_ship_track=2, history_size=2):
+    def __init__(self, ship_game, max_steps=200, n_ship_track=2, history_size=2, n_goals=0, goal_gen='random'):
         if n_ship_track < 0:
             raise ValueError("n_ship_track must be non-negative")
         if history_size < 1:
@@ -34,6 +36,7 @@ class ShipEnv(Env):
         self.cumulative_reward = 0
         self.step_count = 0
         self.game = ship_game
+        self.n_goals = n_goals
 
         self.n_ship_track = n_ship_track
         self.history_size = history_size
@@ -149,10 +152,21 @@ class ShipEnv(Env):
 
         return out
 
-    def reset(self, spawn_point=(10,10)):
-        # print("ShipEnv Reset")
-        self.game.reset(spawn_point=spawn_point)
+    def generate_uniform_random_goals(self):
 
+        i = 0
+        while i < self.n_goals:
+            x = np.random.randint(30, self.game.bounds[0] - 30)
+            y = np.random.randint(30, self.game.bounds[1] - 30)
+            xy_pos = Vec2d(x, y)
+
+            if xy_pos.get_distance(self.game.player.body.position) > 20:
+                i += 1
+                self.game.add_goal(x, y)
+
+    def reset(self, spawn_point=(10,10)):
+        self.game.reset(spawn_point=spawn_point)
+        self.generate_uniform_random_goals()
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
