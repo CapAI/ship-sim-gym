@@ -10,6 +10,8 @@ from gym.utils import seeding
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
 DEFAULT_STATE_VAL = -1
 
+STEP_PENALTY = -0.01
+
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
@@ -56,7 +58,7 @@ class ShipEnv(Env):
         if self.game.goal_reached:
             self.reward = 1.0
         else:
-            self.reward = -0.01  # Small penalty
+            self.reward = STEP_PENALTY  # Small penalty
 
     def _normalized_coords(self, x, y):
         return x / self.game.bounds[0], y / self.game.bounds[1]
@@ -148,7 +150,7 @@ class ShipEnv(Env):
         return out
 
     def reset(self, spawn_point=(10,10)):
-        print("ShipEnv Reset")
+        # print("ShipEnv Reset")
         self.game.reset(spawn_point=spawn_point)
 
         self.last_action = None

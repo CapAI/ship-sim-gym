@@ -4,7 +4,7 @@ import unittest
 from pymunk import Vec2d
 
 from ship_gym.game import ShipGame
-from ship_gym.ship_env import ShipEnv, DEFAULT_STATE_VAL
+from ship_gym.ship_env import ShipEnv, DEFAULT_STATE_VAL, STEP_PENALTY
 
 
 class TestShipEnv(unittest.TestCase):
@@ -156,7 +156,8 @@ class TestShipEnv(unittest.TestCase):
             self.assertListEqual(list(states[2:4]), [g.x, g.y])
 
         # Let's start over
-        game = ShipGame(fps=100, speed=1, bounds=[400, 800])
+        print("----------------------------------------------")
+        game = ShipGame(fps=4, speed=1, bounds=[400, 800])
         env = ShipEnv(game, n_ship_track=0, history_size=1)
 
         base_x = game.bounds[0] / 2
@@ -172,22 +173,31 @@ class TestShipEnv(unittest.TestCase):
         print(game.goals)
 
         # g1 will be the closest until player exceeds y=20
-        while len(game.goals) == 4:
+
+        while True:
             states, _, _, _ = env.step(0)  # Forward
 
+            print("TRYING TO GET THE FIRST GOAL STILL .... ")
             print("GOALS LEFT=")
             print(game.goals)
             print("STATES=")
             print(states)
 
+            if game.goal_reached:
+                print("DONE 1")
+                break
+
             if game.player.y > 20:  # New closest goal!
                 self.assertListEqual(list(states[2:4]), [g3.x, g3.y])
-                break
             else:
                 self.assertListEqual(list(states[2:4]), [g1.x, g1.y])
 
-        while len(game.goals) == 3:
+        while True:
             states, _, _, _ = env.step(0)  # Forward
+
+            if game.goal_reached:
+                print("DONE 1")
+                break
 
             print("GOALS LEFT=")
             print(game.goals)
@@ -196,21 +206,102 @@ class TestShipEnv(unittest.TestCase):
 
             self.assertListEqual(list(states[2:4]), [g4.x, g4.y])
 
+        print("SHOULD BE ONLY TWO LEFT NOW!")
+        print("GOALS LEFT=")
+        print(game.goals)
         states, _, _, _ = env.step(0)  # Forward
         self.assertListEqual(list(states[2:4]), [g1.x, g1.y])
 
-        g2.x = game.player.x + 25
-        g2.y = game.player.y + 25
+        g5 = game.add_goal(game.player.x + 30, game.player.y + 30)
         states, _, _, _ = env.step(4)  # Forward
-        self.assertListEqual(list(states[2:4]), [g2.x, g2.y])
+        self.assertListEqual(list(states[2:4]), [g5.x, g5.y])
 
 
     def test_reward(self):
-        # Let's start over
+
         game = ShipGame(fps=100, speed=1, bounds=[400, 800])
-        env = ShipEnv(game, n_ship_track=0, history_size=1)
+        env = ShipEnv(game, n_ship_track=0, history_size=1, max_steps=1000)
+        env.reset()
 
-        self.game.add_goal(1000, 1000)
+        game.add_goal(10000000, 10000000) # Unreachable goal
+
+         # = env.step(0)  # Forward
+
+        for _ in range(100):
+            _, reward, _, _ = env.step(env.action_space.sample()) # take a random action
+
+            self.assertEqual(reward, STEP_PENALTY)
+
+        game.add_goal(200,100)
+        game.player.body.position = Vec2d(200,100)
+
+        _, reward, _, _ = env.step(2)
+        self.assertEqual(reward, 1)
 
 
+    def test_done_goals_reached(self):
+
+        game = ShipGame(fps=100, speed=1, bounds=[400, 800])
+        env = ShipEnv(game, n_ship_track=0, history_size=1, max_steps=1000)
+        env.reset(spawn_point=(10, 10))
+
+        # self.assertFalse(env.is_done())
+
+        _, _, done, _ = env.step(env.action_space.sample())  # take a random action
+        self.assertTrue(done)
+
+        g = game.add_goal(100, 100)
+        self.assertFalse(env.is_done())
+
+        game.player.body.position = Vec2d(g.x, g.y)
+        _, _, done, _ = env.step(env.action_space.sample())  # take a random action
+        self.assertTrue(env.is_done())
+
+    def test_done_out_of_bounds(self):
+
+
+        def out_of_bounds_gen(bound_upper, bound_lower=0, range=1000):
+            x = bound_lower
+            while x >= bound_lower and x < bound_upper:
+                x = random.randint(bound_lower-range, bound_upper + range)
+
+            return x
+
+        game = ShipGame(fps=100, speed=1, bounds=[400, 800])
+        env = ShipEnv(game, n_ship_track=0, history_size=1, max_steps=1000)
+        env.reset(spawn_point=(10,10))
+
+        game.add_goal(1000,1000)
+
+        # Just X out of bounds
+        for _ in range(100):
+            x = out_of_bounds_gen(game.bounds[0], 100)
+            y = 100 # Inside
+
+            game.player.body.position = Vec2d(x, y)
+            _, done, _, _ = env.step(3)
+
+            self.assertTrue(done)
+
+        # Just Y out of bounds
+        for _ in range(100):
+
+            y = out_of_bounds_gen(game.bounds[1], 20)
+            x = 100  # Inside
+
+            game.player.body.position = Vec2d(x, y)
+            _, done, _, _ = env.step(3)
+
+            self.assertTrue(done)
+
+
+        # Both X and Y out of bounds
+        for _ in range(100):
+
+            x = out_of_bounds_gen(game.bounds[0], 100)
+            y = out_of_bounds_gen(game.bounds[1], 20)
+
+            _, done, _, _ = env.step(3)
+
+            self.assertTrue(done)
 
