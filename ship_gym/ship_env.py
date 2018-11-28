@@ -20,7 +20,8 @@ class ShipEnv(Env):
     action_space = Discrete(5)
     reward_range = (-1, 1)
 
-    # observation_space = Box(low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8)
+    def __del__(self):
+    	print("Delete shipenv")
 
     # TODO: Derive the discrete actions
     def __init__(self, ship_game, max_steps=200, n_ship_track=2, history_size=2, n_goals=0, goal_gen='random'):
@@ -42,9 +43,9 @@ class ShipEnv(Env):
         self.history_size = history_size
         self.n_states = (n_ship_track + 1 + 1) * 2
         self.states_history = self.n_states * history_size
-        self.observation_space = Box(low=0, high=max(self.game.bounds), shape=(self.n_states,), dtype=np.uint8)
+        self.observation_space = Box(low=0, high=max(self.game.bounds), shape=(self.states_history,), dtype=np.uint8)
 
-        print(" *** SHIP-GYM INITIALIZED *** ")
+        # print(" *** SHIP-GYM INITIALIZED *** ")
        
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)

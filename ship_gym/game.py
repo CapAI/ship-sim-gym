@@ -52,7 +52,7 @@ class Ship(object):
         self.rudder_angle = 0
 
         self.point_of_thrust = self.body.center_of_gravity
-        self.max_angle = 5
+        self.max_angle = 8
 
     @property
     def x(self):
@@ -64,25 +64,11 @@ class Ship(object):
 
     def move_forward(self):
         self.body.apply_force_at_local_point(self.force_vector, self.point_of_thrust)
-        self.draw_force()
-        
-
-    def draw_force(self):
-        pass
-
-        ''' CONTENT REMOVED, IT REQUIRED ACCESS TO GAME BOUNDS, IMPOSSIBLE NOW SINCE ITS A CLASS '''
-
-        # p1 = self.body.local_to_world(self.point_of_thrust)
-        # p2 = self.body.local_to_world(self.point_of_thrust - self.force_vector)
-        #
-        # # p1 = self.invert_p(p1)
-        # # p2 = invert_p(p2)
-        #
-        # # pygame.draw.line(screen, (0, 255, 0), p1, p2)
+        # self.draw_force()
 
     def move_backward(self):
         self.body.apply_force_at_local_point((0, -30), (0, -5))
-        self.draw_force()
+        # self.draw_force()
 
     def clamp_rudder(self):
         if self.rudder_angle < -self.max_angle:
@@ -97,7 +83,7 @@ class Ship(object):
 
         self.point_of_thrust.x = self.body.center_of_gravity.x - self.rudder_angle
 
-        self.draw_force()
+        # self.draw_force()
 
 
 DEFAULT_BOUNDS = (500, 500)
@@ -155,8 +141,8 @@ class ShipGame():
         goal = GameObject(body, shape)
         self.goals.append(goal)
 
-        print("Created goal at ", x, " ", y)
-        print(f"There are now {len(self.goals)} goals in the game!")
+        # print("Created goal at ", x, " ", y)
+        # print(f"There are now {len(self.goals)} goals in the game!")
 
         return goal
 
@@ -262,7 +248,7 @@ class ShipGame():
         return True
 
     def collide_goal(self, arbiter, space, data):
-        print(" !!! REACHED GOAL !!! ")
+        # print(" !!! REACHED GOAL !!! ")
 
         brick_shape = arbiter.shapes[1]
         space.remove(brick_shape, brick_shape.body)
@@ -313,7 +299,7 @@ class ShipGame():
                     min_distance = dist
                     min_goal = goal
 
-            print("Min goal = ", min_goal)
+            # print("Min goal = ", min_goal)
             return min_goal
         return None
 
