@@ -2,7 +2,6 @@ import os
 import time
 import sys
 
-import gym
 import numpy as np
 from baselines.results_plotter import ts2xy
 from stable_baselines.bench import load_results, Monitor

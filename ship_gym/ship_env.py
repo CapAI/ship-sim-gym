@@ -24,12 +24,9 @@ class ShipEnv(Env):
 		print("Delete shipenv")
 
 	# TODO: Derive the discrete actions
-	def __init__(self, ship_game, max_steps=200, n_ship_track=2, history_size=2, n_goals=0, goal_gen='random'):
-		if n_ship_track < 0:
-			raise ValueError("n_ship_track must be non-negative")
-		if history_size < 1:
-			raise ValueError("history_size must be greater than zero")
+	def __init__(self, ship_game, config, max_steps=1000, history_size=2, n_ship_track=0):
 
+		# TODO: Should add some basic sanity checks (max_steps > 0 etc.)
 		self.last_action = None
 		self.max_steps = max_steps
 		self.last_action = None
@@ -37,13 +34,17 @@ class ShipEnv(Env):
 		self.cumulative_reward = 0
 		self.step_count = 0
 		self.game = ship_game
-		self.n_goals = n_goals
+		self.n_goals = config["n_goals"]
 
 		# TODO: This is a mess of too many parameters and poorly named ones
 		self.n_ship_track = n_ship_track
 		self.history_size = history_size
-		self.n_states = (n_ship_track + 1 + 1) * 2 + 1 + 1 
-		self.states_history = self.n_states * history_size
+		self.n_states = (self.n_ship_track + 1 + 1) * 2 + 1 + 1
+		self.states_history = self.n_states * self.history_size
+		if self.n_ship_track < 0:
+			raise ValueError("n_ship_track must be non-negative")
+		if self.history_size < 1:
+			raise ValueError("history_size must be greater than zero")
 		if len(self.game.ships) > self.n_ship_track:
 			print("* WARNING * There are more ships in the self.game than can be stored by this ship_gym configuration. "
 				  "You should increase the N_SHIP_POSITIONS")
@@ -202,7 +203,7 @@ class ShipEnv(Env):
 		for i in range(1, n+1):
 			gx = x + x_delta * i + np.random.randint(-jitter, jitter)
 			gy = y + y_delta * i + np.random.randint(-jitter, jitter)
-			self.game.add_goal(x, y)
+			self.game.add_goal(gx, gy)
 
 
 	def generate_uniform_random_goals(self):
