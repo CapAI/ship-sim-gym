@@ -58,10 +58,10 @@ if __name__ == '__main__':
                 "run": "PPO",
                 "env": "ShipGym-v1",
                 "num_samples": 8, # Repeat the experiment this many times
+                "stop": {
+                    'episode_reward_mean': reward_done
+                },
                 "config": {
-                    "stop": {
-                        'episode_reward_mean': reward_done
-                    },
                     "env_config": {
                         "n_goals": n_goals
                     },
