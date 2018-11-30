@@ -64,6 +64,8 @@ class ShipEnv(Env):
 		if self.game.colliding:
 			self.reward = -1.0
 		if self.game.goal_reached:
+			# if len(self.game.goals) <= 5:
+				# print(f"LAST 5 GOALS : GOAL #{self.game.total_goals - len(self.game.goals)} / {self.game.total_goals} REACHED")
 			self.reward = 1.0
 		else:
 			self.reward = STEP_PENALTY  # Small penalty
@@ -120,7 +122,7 @@ class ShipEnv(Env):
 			# print("OOPS --- COLLISION")
 			return True
 		elif len(self.game.goals) == 0:
-			print("YEAH --- ALL GOALS REACHED")
+			print("ALL GOALS REACHED!")
 			return True
 
 		player = self.game.player
@@ -162,7 +164,46 @@ class ShipEnv(Env):
 		if self.last_action is not None:
 			out.write(f'action={self.last_action}, reward={self.last_reward}')
 
-		return out
+		return 
+
+	def setup_goals(self):
+		# self.generate_uniform_random_goals()
+		self.gen_goal_path(self.n_goals)
+
+	def setup_obstacles(self):
+		pass
+
+	def setup_player(self):
+		x = np.random.randint(15, self.game.bounds[0])
+		y = np.random.randint(5, 15)
+
+		self.game.player.body.position = Vec2d(x,y)
+
+
+	def setup_game_env(self):
+		self.setup_player()
+		self.setup_goals()		
+		self.setup_obstacles()
+
+
+	def gen_goal_path(self, n):
+
+		x = self.game.player.x
+		y = self.game.player.y + 50
+
+		x_end = np.random.randint(30, self.game.bounds[0] - 30)
+		y_end = np.random.randint(self.game.bounds[1] - 60, self.game.bounds[1] - 30)
+
+		x_delta = (x_end - x) / n
+		y_delta = (y_end - y) / n
+
+		jitter = 20
+
+		for i in range(1, n+1):
+			gx = x + x_delta * i + np.random.randint(-jitter, jitter)
+			gy = y + y_delta * i + np.random.randint(-jitter, jitter)
+			self.game.add_goal(x, y)
+
 
 	def generate_uniform_random_goals(self):
 
@@ -177,7 +218,7 @@ class ShipEnv(Env):
 				self.game.add_goal(x, y)
 
 	def reset(self, spawn_point=(10,10)):
-		self.game.reset(spawn_point=spawn_point)
+		self.game.reset()
 		self.last_action = None
 		self.reward = 0
 		self.cumulative_reward = 0
@@ -185,7 +226,7 @@ class ShipEnv(Env):
 		n = self.n_states * self.history_size
 		self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
 
-		self.generate_uniform_random_goals()
+		self.setup_game_env()
 		self.__add_states()
 
 		return np.array(self.states)

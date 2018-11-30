@@ -1,5 +1,6 @@
 import os
 import time
+import sys
 
 import gym
 import numpy as np
@@ -9,8 +10,6 @@ from stable_baselines.common import set_global_seeds
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import PPO2, ACER
-
-import time
 
 from ship_gym.game import ShipGame
 from ship_gym.ship_env import ShipEnv
@@ -74,12 +73,13 @@ def make_env(rank, bounds, game_fps, game_speed, max_steps, seed=0):
 def get_model_path(n_goals, lr, n_obstacles=0):
 	return os.path.join(model_dir, f"result_g{n_goals}_o{n_obstacles}_lr{lr}")
 
-def train(model_cls, env, n_goal, n_obstacles, lr, steps):
 
-	tb_root_dir = os.path.join(log_dir, "tensorboard", str(int(time.time())))
+tb_root_dir = os.path.join(log_dir, "tb", str(int(time.time())))
+
+def train(model_cls, tid, env, n_goal, n_obstacles, lr, steps):
+
 	start_t = time.time()
-
-	tb_dir = os.path.join(tb_root_dir, f"acer_lr{lr}_g{n_goal}_o{n_obstacles}")
+	tb_dir = os.path.join(tb_root_dir, f"{tid}_{model_cls.__name__}_g{n_goal}_o{n_obstacles}")
 	# model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
 	model = model_cls(MlpPolicy, env, learning_rate=lr, verbose=1, tensorboard_log=tb_dir)
 
@@ -87,11 +87,16 @@ def train(model_cls, env, n_goal, n_obstacles, lr, steps):
 		# Previous model?
 
 		path = get_model_path(n_goal-1, lr)
-		model.load(path)
+
+		try:
+			model.load(path)
+		except ValueError as e:
+			print(f"WARNING: Could not find model 'path'")
+			sleep(0.5)
 
 		print(f"Model '{path}' loaded!")
 
-	model.learn(total_timesteps=steps, log_interval=1000)
+	model.learn(total_timesteps=steps, log_interval=10000)
 
 	end_t = time.time()
 	elapsed = end_t - start_t
@@ -112,24 +117,33 @@ def main():
 
 	''' SET UP YOUR (HYPER)PARAMETERS HERE'''
 
-	lrs = [1.0e-3, 1.0e-4, 1.0e-5]
+	def make_lr_func(start, stop):
+		
+		def lr_func(frac):
+			return start + (stop - start) * (1-frac)
 
-	max_goals = 10
+		return lr_func
+
+	lrs = [1.0e-3, 1.0e-4, 1.0e-5]
+	lrs = [make_lr_func(s, 0) for s in lrs]
+	# noptepochs = [3, 5, 7]
+	# mini_batches
+
+	max_goals = 5
 	max_steps = 1000
 
-	game_fps = 1000
-	game_speed = 30
+	game_fps = 10000
+	game_speed = 10
 	bounds = (800,800)
 
 	# Setting it to the number of CPU's you have is usually optimal
 	num_cpu = 8
-	n_goals = 1
 	n_obstacles = 0
-	total_train_steps = 1e7
+	total_train_steps = 1e6
 
 	env = SubprocVecEnv([make_env(i, bounds, game_fps, game_speed, max_steps) for i in range(num_cpu)])
-
-	for n_goal in tqdm(range(1, max_goals)):
+	i = 0
+	for n_goal in tqdm(range(1, max_goals+1)):
 		# Update envs to use the right number of goals. <3 this function
 		env.set_attr('n_goals', n_goal)
 		steps = int(total_train_steps / max_goals)
@@ -142,12 +156,19 @@ Training Steps 	:\t {steps} / {max_steps}
 Number of goals :\t {n_goal} / {max_goals}
 Learning rate   :\t {lr} 
 			""")
-			train(ACER, env, n_goals, 0, lr, steps)
+
+			i += 1
+			train(PPO2, i, env, n_goal, 0, lr, steps)
+			# train(ACER, env, n_goals, 0, lr, steps)
 
 	print("*" * 30)
 	print(" "*10,"     DONE!     ", " "*10)
 	print(" ", datetime.now(), " ")
 	print("*" * 30)
+
+	del env
+
+	sys.exit(0)
 
 
 
