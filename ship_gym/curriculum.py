@@ -22,9 +22,13 @@ class Lesson(object):
 
 class Curriculum(object):
 
-    def __init__(self, values, conditions):
+    def __init__(self, values, conditions, repeat_condition=1):
         self.lesson = 0
+        self.repeat_reached = 0
+
         self.conditions = conditions
+        self.repeat_condition = repeat_condition
+
         self.values = values
 
     def __int__(self):
@@ -37,8 +41,11 @@ class Curriculum(object):
 
         if self.lesson < len(self.conditions):
             if val > self.conditions[self.lesson]:
-                self.lesson += 1
-                return True
+                self.repeat_reached += 1
+                if self.repeat_reached > self.repeat_condition:
+                    self.lesson += 1
+                    self.repeat_reached = 0
+                    return True
 
         return False
 

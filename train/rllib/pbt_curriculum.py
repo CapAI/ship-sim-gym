@@ -65,7 +65,7 @@ if __name__ == '__main__':
     pbt = PopulationBasedTraining(
         time_attr="time_total_s",
         reward_attr="episode_reward_mean",
-        perturbation_interval=900,  # 15 mins
+        perturbation_interval=60 * 30,
         resample_probability=0.25,
 
         # Specifies the mutations of these hyperparams
@@ -92,13 +92,13 @@ if __name__ == '__main__':
                 print("Phase #1")
                 phase = 2
             elif result["episode_reward_mean"] > 100:
-                print("Phase #2")
+                # print("Phase #2")
                 phase = 1
             else:
                 phase = 0
             agent.optimizer.foreach_evaluator(lambda ev: ev.env.set_phase(phase))
 
-    ray.init(num_cpus=4, num_gpus=1)
+    ray.init(num_cpus=8, num_gpus=1)
 
     n_goals = 5
     reward_done = .9 * n_goals
@@ -109,15 +109,16 @@ if __name__ == '__main__':
                 "run": "PPO",
                 # "run": train,
                 "env": "ShipGym-v1",
-                "num_samples": 4,  # Repeat the experiment this many times
+                "num_samples": 28,  # Repeat the experiment this many times
                 "checkpoint_at_end": True,
                 "checkpoint_freq": 10,
                 "config": {
                     "env_config": {
-                        "n_goals": Curriculum([1,2,3,4,5], [4,8,12,16]),
+                        "n_goals": Curriculum([1, 2, 3, 4, 5], [0.9, 1.8, 2.75, 3.7], repeat_condition=100),
                     },
                     "kl_coeff": 1.0,
-                    "num_workers": 1,
+                    "num_workers": 7,
+                    "num_gpus": 1,
 
                     # These params are tuned from a fixed starting value.
                     "lambda": 0.95,

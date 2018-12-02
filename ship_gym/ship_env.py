@@ -36,7 +36,6 @@ class ShipEnv(Env):
 		self.cumulative_reward = 0
 		self.step_count = 0
 		self.game = ship_game
-		self.lesson = 0
 
 		self.config = config
 		self.episodes_count = -1 # Because the first reset will increment it to 0
@@ -128,7 +127,7 @@ class ShipEnv(Env):
 			# print("OOPS --- COLLISION")
 			return True
 		elif len(self.game.goals) == 0:
-			print("ALL GOALS REACHED!")
+			print("ALL GOALS REACHED! -- CUM REWARD = ", self.cumulative_reward)
 			return True
 
 		player = self.game.player
@@ -146,13 +145,13 @@ class ShipEnv(Env):
 		return False
 
 	def check_curriculum(self):
-
 		# See which ones are curriculum
 
 		currs = [v for k,v in self.config.items() if isinstance(v, Curriculum)]
 		for c in currs:
+
 			if c.progress(self.cumulative_reward):
-				print("\n***\n New lesson = ", self.lesson, "\n***\n")
+				print("\n***\n New lesson = ", c.lesson, "\n***\n")
 
 				# print(int)
 
@@ -205,7 +204,7 @@ class ShipEnv(Env):
 		out = sys.stdout
 
 		if self.last_action is not None:
-			out.write(f'action={self.last_action}, reward={self.last_reward}')
+			out.write(f'action={self.last_action}, cum_reward={self.cumulative_reward}')
 
 		return 
 
