@@ -10,6 +10,8 @@ from gym.utils import seeding
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
 from pymunk import Vec2d
 
+from ship_gym.curriculum import Curriculum
+
 DEFAULT_STATE_VAL = -1
 
 STEP_PENALTY = -0.01
@@ -34,7 +36,10 @@ class ShipEnv(Env):
 		self.cumulative_reward = 0
 		self.step_count = 0
 		self.game = ship_game
-		self.n_goals = config["n_goals"]
+		self.lesson = 0
+
+		self.config = config
+		self.episodes_count = -1 # Because the first reset will increment it to 0
 
 		# TODO: This is a mess of too many parameters and poorly named ones
 		self.n_ship_track = n_ship_track
@@ -140,6 +145,42 @@ class ShipEnv(Env):
 
 		return False
 
+	def check_curriculum(self):
+
+		# See which ones are curriculum
+
+		currs = [v for k,v in self.config.items() if isinstance(v, Curriculum)]
+		for c in currs:
+			if c.progress(self.cumulative_reward):
+				print("\n***\n New lesson = ", self.lesson, "\n***\n")
+
+				# print(int)
+
+
+		# Easy non generic implementation
+		# exp_reward = 0.9 * self.n_goals - self.n_obstacles * 0.4
+		# exp_reward = 0
+		#
+		# if self.cumulative_reward > exp_reward:
+		# 	print("Training progressed!")
+		# 	self.lesson += 1
+		#
+		# 	if self.lesson < 5:
+		# 		self.n_goals += 1
+		# 	else:
+		# 		self.n_obstacles += 1
+
+
+		# if self.curriculum is None:
+		# 	return
+		#
+		# else:
+		# 	if self.curriculum.progress(self)
+		# 	for param in self.curriculum.param_names:
+		# 		try:
+		# 			self[]
+
+
 
 	def step(self, action):
 		assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
@@ -151,6 +192,7 @@ class ShipEnv(Env):
 		self.game.render()
 
 		self.determine_reward()
+		self.cumulative_reward += self.reward
 		self.__add_states()
 		self.step_count += 1
 
@@ -169,7 +211,9 @@ class ShipEnv(Env):
 
 	def setup_goals(self):
 		# self.generate_uniform_random_goals()
-		self.gen_goal_path(self.n_goals)
+
+		# HACK: TODO: I do the int because it can be a curriculum. Should figure out a better way ...
+		self.gen_goal_path(int(self.config["n_goals"]))
 
 	def setup_obstacles(self):
 		pass
@@ -195,8 +239,9 @@ class ShipEnv(Env):
 		x_end = np.random.randint(30, self.game.bounds[0] - 30)
 		y_end = np.random.randint(self.game.bounds[1] - 60, self.game.bounds[1] - 30)
 
-		x_delta = (x_end - x) / n
-		y_delta = (y_end - y) / n
+		max_n = 5
+		x_delta = (x_end - x) / max_n
+		y_delta = (y_end - y) / max_n
 
 		jitter = 20
 
@@ -205,25 +250,15 @@ class ShipEnv(Env):
 			gy = y + y_delta * i + np.random.randint(-jitter, jitter)
 			self.game.add_goal(gx, gy)
 
-
-	def generate_uniform_random_goals(self):
-
-		i = 0
-		while i < self.n_goals:
-			x = np.random.randint(30, self.game.bounds[0] - 30)
-			y = np.random.randint(30, self.game.bounds[1] - 30)
-			xy_pos = Vec2d(x, y)
-
-			if xy_pos.get_distance(self.game.player.body.position) > 20:
-				i += 1
-				self.game.add_goal(x, y)
-
-	def reset(self, spawn_point=(10,10)):
+	def reset(self):
 		self.game.reset()
+		self.check_curriculum()
+
 		self.last_action = None
 		self.reward = 0
 		self.cumulative_reward = 0
 		self.step_count = 0
+		self.episodes_count += 1
 		n = self.n_states * self.history_size
 		self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
 

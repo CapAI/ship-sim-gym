@@ -33,8 +33,8 @@ if __name__ == '__main__':
     pbt = PopulationBasedTraining(
         time_attr="time_total_s",
         reward_attr="episode_reward_mean",
-        perturbation_interval=300,
-        resample_probability=1,
+        perturbation_interval=900, # 15 mins
+        resample_probability=0.25,
 
         # Specifies the mutations of these hyperparams
         hyperparam_mutations={
@@ -48,25 +48,26 @@ if __name__ == '__main__':
 
     ray.init()
 
-
     n_goals = 5
-    reward_done = .8*n_goals
+    reward_done = .9*n_goals
     
     run_experiments(
         {
             "pbt_ship_sim": {
                 "run": "PPO",
                 "env": "ShipGym-v1",
-                "num_samples": 8, # Repeat the experiment this many times
+                "num_samples": 50, # Repeat the experiment this many times
                 "stop": {
                     'episode_reward_mean': reward_done
                 },
+                "checkpoint_at_end" : True,
+                "checkpoint_freq" : 10,
                 "config": {
                     "env_config": {
                         "n_goals": n_goals
                     },
                     "kl_coeff": 1.0,
-                    "num_workers": 8,
+                    "num_workers": 7,
                     "num_gpus": 1,
 
                     # This gives me the strangest errors!
@@ -76,9 +77,10 @@ if __name__ == '__main__':
                     # These params are tuned from a fixed starting value.
                     "lambda": 0.95,
                     "clip_param": 0.2,
-                    "lr": 5.0e-4,
 
                     # These params start off randomly drawn from a set.
+                    "lr": 
+                    	lambda spec: random.choice([1e-3, 5e-4, 1e-4, 5e-5, 1e-5]),
                     "num_sgd_iter":
                         lambda spec: random.choice([10, 20, 30]),
                     "sgd_minibatch_size":
