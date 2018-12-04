@@ -34,12 +34,12 @@ class ShipGame():
 
     __temp_fps = 0
 
-    def __init__(self, speed=1, fps=30, bounds=DEFAULT_BOUNDS, debug_mode=False):
+    def __init__(self, game_config, debug_mode=False):
 
-        self.speed = speed
-        self.fps = fps
-        self.bounds = bounds
-        self.screen = pygame.display.set_mode(bounds)
+        self.speed = game_config.SPEED
+        self.fps = game_config.FPS
+        self.bounds = game_config.BOUNDS
+        self.screen = pygame.display.set_mode(self.bounds)
         self.clock = pygame.time.Clock()
         self.goal_reached = False
         self.colliding = False
@@ -51,8 +51,8 @@ class ShipGame():
         pygame.display.set_caption("Ship Sim Gym")
         pygame.key.set_repeat(10, 10)
 
-        print("Init game at speed = ", speed)
-        print("Init game at fps = ", fps)
+        print("Init game at speed = ", self.speed)
+        print("Init game at fps = ", self.fps)
 
         self.reset()
 
@@ -316,14 +316,17 @@ class ShipGame():
         """
 
         x_margin = 50
-        x_end = np.random.randint(self.bounds[0] / 2 - 50, self.bounds[0] / 2 + 50)
-        y_end = np.random.randint(self.bounds[1] - 60, self.bounds[1] - 30)
+        # x_end = np.random.randint(self.bounds[0] / 2 - 10, self.bounds[0] / 2 + 10)
+        # y_end = np.random.randint(self.bounds[1] - 10, self.bounds[1] - 10)
+
+        x_end = self.bounds[0] / 2
+        y_end = self.bounds[1]
 
         max_n = 5
         x_delta = (x_end - start_pos.x) / max_n
         y_delta = (y_end - start_pos.y) / max_n
 
-        jitter = 0
+        jitter = 40
         tolerance = 50
 
         max_attempts = 1000

@@ -7,6 +7,7 @@ from gym import Env
 from gym.spaces import Discrete, Box
 from gym.utils import seeding
 
+
 # Plus self, other ships and goal position times 2 for x and y coordinates, times history size
 from pymunk import Vec2d
 
@@ -27,24 +28,21 @@ class ShipEnv(Env):
         print("Delete ShipEnv")
 
     # TODO: Derive the discrete actions
-    def __init__(self, config, max_steps=1000, history_size=2):
+    def __init__(self, game_config, env_config):
 
         # TODO: Should add some basic sanity checks (max_steps > 0 etc.)
         self.last_action = None
-        self.max_steps = max_steps
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
+        self.env_config = env_config
 
-        self.game = ShipGame(config["speed"], config["fps"], config["game_bounds"])
+        self.game = ShipGame(game_config)
 
-
-        self.config = config
+        # self.config = config
         self.episodes_count = -1 # Because the first reset will increment it to 0
 
-        # TODO: This is a mess of too many parameters and poorly named ones
-        self.history_size = history_size
 
         """P is the player position
         A is the player angle
@@ -54,9 +52,9 @@ class ShipEnv(Env):
         N is the number of rays lidar uses
         """
         self.n_states = 2 + 1 + 1 + 2 + self.game.player.lidar.n_beams
-        self.states_history = self.n_states * self.history_size
+        self.states_history = self.n_states * self.env_config.HISTORY_SIZE
 
-        if self.history_size < 1:
+        if self.env_config.HISTORY_SIZE < 1:
             raise ValueError("history_size must be greater than zero")
         self.observation_space = Box(low=0, high=max(self.game.bounds), shape=(self.states_history,), dtype=np.uint8)
 
@@ -117,15 +115,9 @@ class ShipEnv(Env):
             goal_pos = [goal.body.position.x, goal.body.position.y]
         states[:6] = [player.x, player.y, player.rudder_angle, player.body.angle, goal_pos[0], goal_pos[1]]
 
-        ship_positions = []
-        for i in range(min(len(self.game.ships), self.n_ship_track)):
-            #   TODO: Figure out the closest few if there are too few state slots available
+        lidar_vals = self.game.player.lidar.vals
 
-            ship = self.game.ships[i]
-            ship_positions.extend([ship.x, ship.y])
-
-
-        states[4:4+len(ship_positions)] = ship_positions
+        states[6:] = lidar_vals
         self.states.extend(states)
 
     def is_done(self):
@@ -144,7 +136,7 @@ class ShipEnv(Env):
             # print("Y out of bounds")
             return True
 
-        if self.step_count >= self.max_steps:
+        if self.step_count >= self.env_config.MAX_STEPS:
             print("MAX STEPS")
             return True
 
@@ -152,6 +144,9 @@ class ShipEnv(Env):
 
     def check_curriculum(self):
         # See which ones are curriculum
+        return
+
+        # NEEDS FIXING!
 
         currs = [v for k,v in self.config.items() if isinstance(v, Curriculum)]
         for c in currs:
@@ -215,10 +210,11 @@ class ShipEnv(Env):
         return
 
     def setup_goals(self):
+        pass
         # self.generate_uniform_random_goals()
 
         # HACK: TODO: I do the int because it can be a curriculum. Should figure out a better way ...
-        self.gen_goal_path(int(self.config["n_goals"]))
+        # self.gen_goal_path(int(self.config["n_goals"]))
 
     def setup_obstacles(self):
         pass
@@ -264,7 +260,7 @@ class ShipEnv(Env):
         self.cumulative_reward = 0
         self.step_count = 0
         self.episodes_count += 1
-        n = self.n_states * self.history_size
+        n = self.n_states * self.env_config.HISTORY_SIZE
         self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
 
         self.setup_game_env()
