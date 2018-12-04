@@ -39,8 +39,6 @@ class ShipEnv(Env):
         self.env_config = env_config
 
         self.game = ShipGame(game_config)
-
-        # self.config = config
         self.episodes_count = -1 # Because the first reset will increment it to 0
 
 
@@ -201,7 +199,7 @@ class ShipEnv(Env):
         return np.array(self.states), self.reward, done, {}
 
     def render(self, mode='human', close=False):
-        print("ShipEnv Render ...")
+        # print("ShipEnv Render ...")
         out = sys.stdout
 
         if self.last_action is not None:
@@ -252,6 +250,7 @@ class ShipEnv(Env):
             self.game.add_goal(gx, gy)
 
     def reset(self):
+        print(">>>> SHIP_ENV RESET!")
         self.game.reset()
         self.check_curriculum()
 

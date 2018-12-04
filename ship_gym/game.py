@@ -34,7 +34,7 @@ class ShipGame():
 
     __temp_fps = 0
 
-    def __init__(self, game_config, debug_mode=False):
+    def __init__(self, game_config, debug_mode=True):
 
         self.speed = game_config.SPEED
         self.fps = game_config.FPS
@@ -214,10 +214,14 @@ class ShipGame():
 
         self.screen.fill((0, 0, 200))
 
-        draw_options = pm.pygame_util.DrawOptions(self.screen)
-        self.space.debug_draw(draw_options)
+
+        # if self.graphics_enabled:
+        #     pm.space_debug_draw_options
 
         if self.debug_mode:
+            options = pm.pygame_util.DrawOptions(self.screen)
+            options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
+            self.space.debug_draw(options)
             res = self.player.lidar.query_results
             for r in res:
                 # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
@@ -238,8 +242,9 @@ class ShipGame():
                     pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
 
         p = self.invert_p(self.player.position)
-        pygame.draw.circle(self.screen, (255, 0, 0), (round(p.x), round(p.y)), 10)
 
+        # pygame.draw.circle(self.screen, (255, 255, 0), (round(p.x), round(p.y)), 10)
+        pygame.draw.circle(self.screen, (255, 255, 0), (round(p.x), round(p.y)), 10)
         pygame.display.flip()
 
         #pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
@@ -255,7 +260,7 @@ class ShipGame():
         :param z:
         :return:
         """
-        print("Collide with environment!!")
+        # print("Collide with environment!!")
         self.colliding = True
         return True
 
@@ -373,9 +378,9 @@ class ShipGame():
 def main():
 
     import os
-    cwd = os.getcwd()
-    print(cwd)
 
+    cwd = os.getcwd()
+    # print(cwd)
     g = ShipGame(debug_mode=True)
 
     while True:

@@ -80,7 +80,7 @@ def load_from_pickle(path):
     # return [[[100, 100], [100, 200], [200, 200], [200, 100]]]
 
     '''
-    *
+    *---------------------------------------------------------
     |
     |
     |
@@ -103,8 +103,8 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     :param N:
     :return:
     """
-    print("Generating riverbank polies for N =", N)
-    delta = bounds[1] / (N)
+    # print("Generating riverbank polies for N =", N)
+    delta = bounds[1] / N
     avg_width = int((1-width_frac)*bounds[0] / 2)
 
     # print(avg_width)
@@ -116,7 +116,7 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
 
         vs.append([x_min, 0])
 
-        for i in range(1, n_segments):
+        for i in range(0, n_segments+1):
 
             skip_jitter = int(i != 0 and i != n_segments)
             if not skip_jitter:
@@ -134,11 +134,11 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
 
             vs.append([x, y])
 
-        # print(f"Generated river bank poly with {len(vs)} vertices")
+
         return vs
 
     left_vs = river_bank_helper(N, 0, avg_width)
-    left_vs.extend([[0, bounds[1]], [0,0]])
+    left_vs.extend([[0, bounds[1]], [0, 0]])
 
     right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
