@@ -153,8 +153,8 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
 
-    # right_vs.append(bounds)
-    # right_vs.append([bounds[0], 0])
+    right_vs.append(bounds)
+    right_vs.append([bounds[0], 0])
 
     # right_vs.extend(river_bank(N))
     # for i in range(0, N + 1):
@@ -165,7 +165,7 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     #     right_vs.append([x, y])
 
     # close the loop
-    # right_vs.append([bounds[0], bounds[1]])
-    # right_vs.append([bounds[0], 0])
+    right_vs.append([bounds[0], bounds[1]])
+    right_vs.append([bounds[0], 0])
 
-    return [right_vs]
+    return [left_vs, right_vs]

@@ -27,9 +27,69 @@ class GameObject(object):
     def y(self):
         return self.body.position.y
 
+class LiDAR(object):
+
+    def __init__(self, ship, shapes, n_beams=10, spread=90, distance=100):
+        self.n_beams = n_beams
+        self.spread = spread
+        self.distance = distance
+        self.shapes = shapes
+        self.ship = ship
+
+        self.vals = [-1] * n_beams
+        self.query_results = list()
+
+    def query(self):
+        """
+
+        :param shapes:
+        :return:
+        """
+
+        angle_delta = math.radians(self.spread / self.n_beams)
+        angle_start = self.ship.body.angle + math.radians(90 - self.spread / 2)
+
+        # print("self.angle = ", math.degrees(self.ship.body.angle))
+        # print("angle start = ", angle_start)
+
+        bb = self.ship.shape.bb
+        cx = self.ship.x + (bb.right - bb.left) / 2
+        cy = self.ship.y + (bb.top - bb.bottom) / 2
+        origin = Vec2d(cx, cy)
+
+        print("----------------------------------------")
+        self.query_results = list()
+        for i in range(self.n_beams):
+
+            query_result = None
+            for shape in self.shapes:
+                rotation = angle_start + (angle_delta * i)
+                x_end = cx + self.distance * math.cos(rotation)
+                y_end = cy + self.distance * math.sin(rotation)
+                dest = Vec2d(x_end, y_end)
+
+                query_result = shape.segment_query(origin, dest)
+                if query_result.shape is not None:
+                    break
+
+
+            # if query_result.shape is not None:
+            self.query_results.append(query_result)
+
+        print(f"LIDAR QUERY FOUND {len(self.query_results)} RESULTS ... ")
+        return self.query_results
+
+    def values(self):
+        """
+
+        :return:
+        """
+        for q in self.query_results:
+
+
 class Ship(object):
 
-    def __init__(self, x, y, width, height, color, mass=2, lidar=10):
+    def __init__(self, x, y, width, height, color, mass=2, lidar=None):
         """
 
         :param x:
@@ -62,12 +122,9 @@ class Ship(object):
         self.force_vector = Vec2d(0, 100)
         self.rudder_angle = 0
         self.point_of_thrust = self.body.center_of_gravity
-        self.max_angle = 8
+        self.max_angle = 10
+        self.lidar = lidar
 
-        self.setup_lidar()
-
-    def setup_lidar(self):
-        body = pm.Body(None, None, body_type=Body.STATIC)
 
     @property
     def position(self):
@@ -81,40 +138,9 @@ class Ship(object):
     def y(self):
         return self.body.position.y
 
-    def query_sensors(self, shapes):
-        n_beams = 10
-
-        spread = 90
-        angle_delta = math.radians(spread / n_beams)
-        print("self.angle = ", math.degrees(self.body.angle))
-        angle_start = self.body.angle + math.radians(90 - spread / 2)
-        print("angle start = ", angle_start)
-        distance = 100
-        results = list()
-
-        cx = self.x + (self.shape.bb.right - self.shape.bb.left) / 2
-        cy = self.y + (self.shape.bb.top - self.shape.bb.bottom) / 2
-
-        print("----------------------------------------")
-
-        for i in range(n_beams):
-
-            for shape in shapes:
-                rotation = angle_start + (angle_delta * i)
-                x_end = cx + distance * math.cos(rotation)
-                y_end = cy + distance * math.sin(rotation)
-
-                print(cx, cy)
-                print(x_end, y_end)
-
-                query_result = shape.segment_query((cx, cy), (x_end, y_end))
-
-                # if query_result.shape is not None:
-                results.append(query_result)
-                    # break
-
-
-        return results
+    def query_sensors(self):
+        if self.lidar:
+            self.lidar.query()
 
     def move_forward(self):
         self.body.apply_force_at_local_point(self.force_vector, self.point_of_thrust)
@@ -138,6 +164,9 @@ class Ship(object):
         self.point_of_thrust.x = self.body.center_of_gravity.x - self.rudder_angle
 
         # self.draw_force()
+
+    def add_lidar(self, track_shapes):
+        self.lidar = LiDAR(self, track_shapes)
 
 
 class GeoMap(object):

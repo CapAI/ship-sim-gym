@@ -10,7 +10,7 @@ import pymunk as pm
 import pymunk.pygame_util
 
 from ship_gym import game_map
-from ship_gym.models import GameObject, Ship, GeoMap
+from ship_gym.models import GameObject, Ship, GeoMap, LiDAR
 
 SHIP_TEMPLATE = [(0, 0), (0, 10), (5, 15), (10, 10), (10, 0)]
 
@@ -43,6 +43,7 @@ class ShipGame():
         self.clock = pygame.time.Clock()
         self.goal_reached = False
         self.colliding = False
+        self.debug_mode = debug_mode
 
         os.makedirs(self.game_frame_dir, exist_ok=True)
 
@@ -54,13 +55,10 @@ class ShipGame():
         print("Init game at fps = ", fps)
 
         self.reset()
-        # self.load_level()
-        self.gen_level()
 
     def gen_level(self):
         poly = game_map.gen_river_poly(self.bounds)
         self.level = GeoMap(poly, self.bounds)
-
 
         for body, shape in zip(self.level.bodies, self.level.shapes):
             self.space.add(body, shape)
@@ -100,6 +98,26 @@ class ShipGame():
 
         return goal
 
+    def add_player_ship(self, x, y, width, height, color):
+        """
+        Call this after you have created the level!
+        Creates a new Ship instance and adds a shape and body to the pymunk space
+        :param self:
+        :param x:
+        :param y:
+        :param width:
+        :param height:
+        :param color:
+        :return:
+        """
+
+        ship = Ship(x, y, width, height, color)
+        ship.add_lidar(self.level.shapes)
+
+        self.space.add(ship.body, ship.shape)
+
+        return ship
+
     def add_ship(self, x, y, width, height, color):
         """
         Creates a new Ship instance and adds a shape and body to the pymunk space
@@ -112,7 +130,6 @@ class ShipGame():
         :return:
         """
         ship = Ship(x, y, width, height, color)
-        # ship.body.angle = 1.57079633 # + 90 degrees
         self.space.add(ship.body, ship.shape)
 
         return ship
@@ -188,7 +205,7 @@ class ShipGame():
         self.goal_reached = False
         self.handle_input()
 
-
+        self.player.query_sensors()
 
         self.space.step(self.speed * self.base_dt)
         self.clock.tick(self.fps)
@@ -200,22 +217,26 @@ class ShipGame():
         draw_options = pm.pygame_util.DrawOptions(self.screen)
         self.space.debug_draw(draw_options)
 
-        res = self.player.query_sensors(self.level.shapes)
-        for r in res:
-            # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
-            if r.shape is None:
-                p = r.point
-                p = self.invert_p(p)
-                p = (round(p.x), round(p.y))
+        if self.debug_mode:
+            res = self.player.lidar.query_results
+            print(len(res))
+            for r in res:
+                # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
+                if r.shape is None:
+                    p = r.point
+                    p = self.invert_p(p)
+                    p = (round(p.x), round(p.y))
 
-                pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
+                    # Green
+                    pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
 
-            else:
-                p = r.point
-                p = self.invert_p(p)
-                p = (round(p.x), round(p.y))
+                else:
+                    p = r.point
+                    p = self.invert_p(p)
+                    p = (round(p.x), round(p.y))
 
-                pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
+                    # Red circle
+                    pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
 
         p = self.invert_p(self.player.position)
         pygame.draw.circle(self.screen, (255, 0, 0), (round(p.x), round(p.y)), 10)
@@ -264,7 +285,10 @@ class ShipGame():
         self.goals = list()
         self.space = pm.Space()
         self.space.damping = 0.4
-        self.player = self.add_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
+
+        self.create_environment()
+        self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
+
         self.player.shape.collision_type = 0
         self.setup_collision_handlers()
 
@@ -296,6 +320,8 @@ class ShipGame():
             return min_goal
         return None
 
+    def create_environment(self):
+        self.gen_level()
 
 
 def main():
