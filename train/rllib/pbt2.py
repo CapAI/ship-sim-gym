@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     #     "n_goals": n_goals
                     # },
                     "kl_coeff": 1.0,
-                    "num_workers": 7,
+                    "num_workers": 1,
                     "num_gpus": 1,
 
                     # This gives me the strangest errors!

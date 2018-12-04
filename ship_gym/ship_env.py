@@ -128,10 +128,10 @@ class ShipEnv(Env):
 
         player = self.game.player
         if player.x < 0 or player.x > self.game.bounds[0]:
-            # print("X out of bounds")
+            print("X out of bounds")
             return True
         elif player.y < 0 or player.y > self.game.bounds[1]:
-            # print("Y out of bounds")
+            print("Y out of bounds")
             return True
 
         if self.step_count >= self.env_config.MAX_STEPS:
@@ -183,7 +183,7 @@ class ShipEnv(Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        # print("Step #", self.step_count)
+        print("Step #", self.step_count)
 
         self.game.handle_action(action)
         self.game.update()
@@ -225,7 +225,7 @@ class ShipEnv(Env):
 
 
     def setup_game_env(self):
-        self.setup_player()
+        # self.setup_player()
         self.setup_goals()
         self.setup_obstacles()
 

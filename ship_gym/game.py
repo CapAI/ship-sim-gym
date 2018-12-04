@@ -57,8 +57,11 @@ class ShipGame():
         self.reset()
 
     def gen_level(self):
+
         poly = game_map.gen_river_poly(self.bounds)
         self.level = GeoMap(poly, self.bounds)
+
+        # self.level = GeoMap([], self.bounds)
 
         for body, shape in zip(self.level.bodies, self.level.shapes):
             self.space.add(body, shape)
@@ -222,24 +225,24 @@ class ShipGame():
             options = pm.pygame_util.DrawOptions(self.screen)
             options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
             self.space.debug_draw(options)
-            res = self.player.lidar.query_results
-            for r in res:
-                # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
-                if r.shape is None:
-                    p = r.point
-                    p = self.invert_p(p)
-                    p = (round(p.x), round(p.y))
-
-                    # Green
-                    pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
-
-                else:
-                    p = r.point
-                    p = self.invert_p(p)
-                    p = (round(p.x), round(p.y))
-
-                    # Red circle
-                    pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
+            # res = self.player.lidar.query_results
+            # for r in res:
+            #     # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
+            #     if r is not None and r.shape is None:
+            #         p = r.point
+            #         p = self.invert_p(p)
+            #         p = (round(p.x), round(p.y))
+            #
+            #         # Green
+            #         pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
+            #
+            #     else:
+            #         p = r.point
+            #         p = self.invert_p(p)
+            #         p = (round(p.x), round(p.y))
+            #
+            #         # Red circle
+            #         pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
 
         p = self.invert_p(self.player.position)
 
@@ -339,10 +342,13 @@ class ShipGame():
         for i in range(1, n+1):
             attempts = 0
             invalid_pos = True
+
             while invalid_pos:
                 gx = start_pos.x + x_delta * i + random.randint(-jitter, jitter)
                 gy = start_pos.y + y_delta * i + random.randint(-jitter, jitter)
                 invalid_pos = False
+
+                print(f"ATTEMPT #{attempts}")
                 attempts += 1
 
                 for shape in self.level.shapes:

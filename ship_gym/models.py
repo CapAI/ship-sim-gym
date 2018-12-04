@@ -182,8 +182,10 @@ class GeoMap(object):
     def __init__(self, poly_list, bounds):
         self.poly_list = poly_list
         self.bounds = bounds
-        self.gen_bodies(poly_list) #IMPORTANT TO DO FIRST!!
-        self.gen_shapes(poly_list)
+
+        if poly_list is not None:
+            self.gen_bodies(poly_list) #IMPORTANT TO DO FIRST!!
+            self.gen_shapes(poly_list)
         # self.gen_shapes_reorient(poly_list)
 
 
