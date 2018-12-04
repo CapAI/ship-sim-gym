@@ -348,7 +348,7 @@ class ShipGame():
                 gy = start_pos.y + y_delta * i + random.randint(-jitter, jitter)
                 invalid_pos = False
 
-                print(f"ATTEMPT #{attempts}")
+                # print(f"ATTEMPT #{attempts}")
                 attempts += 1
 
                 for shape in self.level.shapes:

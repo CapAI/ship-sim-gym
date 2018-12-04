@@ -183,7 +183,7 @@ class ShipEnv(Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        print("Step #", self.step_count)
+        # print("Step #", self.step_count)
 
         self.game.handle_action(action)
         self.game.update()

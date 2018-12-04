@@ -7,8 +7,9 @@ from ray.tune import run_experiments, tune, register_env
 from ray.tune.schedulers import PopulationBasedTraining
 
 from ship_gym.config import GameConfig, EnvConfig
-from ship_gym.game import ShipGame
 from ship_gym.ship_env import ShipEnv
+
+import multiprocessing
 
 if __name__ == '__main__':
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
                     #     "n_goals": n_goals
                     # },
                     "kl_coeff": 1.0,
-                    "num_workers": 1,
+                    "num_workers": multiprocessing.cpu_count() - 1,
                     "num_gpus": 1,
 
                     # This gives me the strangest errors!
