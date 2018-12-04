@@ -168,4 +168,4 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     # right_vs.append([bounds[0], bounds[1]])
     # right_vs.append([bounds[0], 0])
 
-    return [left_vs, right_vs]
+    return [right_vs]

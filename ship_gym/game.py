@@ -34,7 +34,7 @@ class ShipGame():
 
     __temp_fps = 0
 
-    def __init__(self, speed=1, fps=30, bounds=DEFAULT_BOUNDS):
+    def __init__(self, speed=1, fps=30, bounds=DEFAULT_BOUNDS, debug_mode=False):
 
         self.speed = speed
         self.fps = fps
@@ -175,6 +175,7 @@ class ShipGame():
                         self.fps = self.__temp_fps
 
                 elif event.key == pygame.K_t:
+                    self.player.body.angle += 0.1
                     print("Test function  ... ")
 
 
@@ -185,10 +186,10 @@ class ShipGame():
     def update(self):
         self.colliding = False
         self.goal_reached = False
-
-        # self.
-
         self.handle_input()
+
+
+
         self.space.step(self.speed * self.base_dt)
         self.clock.tick(self.fps)
 
@@ -198,6 +199,26 @@ class ShipGame():
 
         draw_options = pm.pygame_util.DrawOptions(self.screen)
         self.space.debug_draw(draw_options)
+
+        res = self.player.query_sensors(self.level.shapes)
+        for r in res:
+            # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
+            if r.shape is None:
+                p = r.point
+                p = self.invert_p(p)
+                p = (round(p.x), round(p.y))
+
+                pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
+
+            else:
+                p = r.point
+                p = self.invert_p(p)
+                p = (round(p.x), round(p.y))
+
+                pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
+
+        p = self.invert_p(self.player.position)
+        pygame.draw.circle(self.screen, (255, 0, 0), (round(p.x), round(p.y)), 10)
 
         pygame.display.flip()
 
@@ -241,13 +262,10 @@ class ShipGame():
         self.total_goals = 0
         self.ships = list()
         self.goals = list()
-
         self.space = pm.Space()
         self.space.damping = 0.4
-
         self.player = self.add_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
         self.player.shape.collision_type = 0
-
         self.setup_collision_handlers()
 
     def add_default_traffic(self):
@@ -286,7 +304,7 @@ def main():
     cwd = os.getcwd()
     print(cwd)
 
-    g = ShipGame()
+    g = ShipGame(debug_mode=True)
 
     while True:
 

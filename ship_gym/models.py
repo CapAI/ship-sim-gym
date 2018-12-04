@@ -1,3 +1,4 @@
+import math
 import random
 
 import pygame
@@ -28,7 +29,7 @@ class GameObject(object):
 
 class Ship(object):
 
-    def __init__(self, x, y, width, height, color, mass=2):
+    def __init__(self, x, y, width, height, color, mass=2, lidar=10):
         """
 
         :param x:
@@ -38,6 +39,7 @@ class Ship(object):
         :param color:
         :param mass:
         """
+
         points = [(x[0] * width, x[1] * height) for x in SHIP_TEMPLATE]
         moment = pm.moment_for_poly(mass, points) 
 
@@ -62,6 +64,15 @@ class Ship(object):
         self.point_of_thrust = self.body.center_of_gravity
         self.max_angle = 8
 
+        self.setup_lidar()
+
+    def setup_lidar(self):
+        body = pm.Body(None, None, body_type=Body.STATIC)
+
+    @property
+    def position(self):
+        return self.body.position
+
     @property
     def x(self):
         return self.body.position.x
@@ -69,6 +80,41 @@ class Ship(object):
     @property
     def y(self):
         return self.body.position.y
+
+    def query_sensors(self, shapes):
+        n_beams = 10
+
+        spread = 90
+        angle_delta = math.radians(spread / n_beams)
+        print("self.angle = ", math.degrees(self.body.angle))
+        angle_start = self.body.angle + math.radians(90 - spread / 2)
+        print("angle start = ", angle_start)
+        distance = 100
+        results = list()
+
+        cx = self.x + (self.shape.bb.right - self.shape.bb.left) / 2
+        cy = self.y + (self.shape.bb.top - self.shape.bb.bottom) / 2
+
+        print("----------------------------------------")
+
+        for i in range(n_beams):
+
+            for shape in shapes:
+                rotation = angle_start + (angle_delta * i)
+                x_end = cx + distance * math.cos(rotation)
+                y_end = cy + distance * math.sin(rotation)
+
+                print(cx, cy)
+                print(x_end, y_end)
+
+                query_result = shape.segment_query((cx, cy), (x_end, y_end))
+
+                # if query_result.shape is not None:
+                results.append(query_result)
+                    # break
+
+
+        return results
 
     def move_forward(self):
         self.body.apply_force_at_local_point(self.force_vector, self.point_of_thrust)
