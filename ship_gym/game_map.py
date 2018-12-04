@@ -143,16 +143,19 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
 
-    # Secret border
-    b_thicknes = 100
-    border_west = [[0, 0], [-b_thicknes, 0], [-b_thicknes, bounds[1]], [0, bounds[1]]]
-    border_east  = [[bounds[0], 0], [bounds[0]+b_thicknes, 0], [bounds[0]+b_thicknes, bounds[1]], [bounds[0], bounds[1]]]
+    # print("GEN LEVEL DONE  !!! ")
 
-    border_north = [[0, bounds[1]+b_thicknes], [bounds[0], bounds[1]+b_thicknes], [bounds[0], bounds[1]+1], [0, bounds[1]+1]]
-    border_south = [[0, -b_thicknes], [bounds[0], -b_thicknes], [bounds[0], 0], [0, 0]]
+    # Secret border
+    # b_thicknes = 100
+    # border_west = [[0, 0], [-b_thicknes, 0], [-b_thicknes, bounds[1]], [0, bounds[1]]]
+    # border_east  = [[bounds[0], 0], [bounds[0]+b_thicknes, 0], [bounds[0]+b_thicknes, bounds[1]], [bounds[0], bounds[1]]]
+    #
+    # border_north = [[0, bounds[1]+b_thicknes], [bounds[0], bounds[1]+b_thicknes], [bounds[0], bounds[1]+1], [0, bounds[1]+1]]
+    # border_south = [[0, -b_thicknes], [bounds[0], -b_thicknes], [bounds[0], 0], [0, 0]]
 
     # close the loop
     # right_vs.append([bounds[0], bounds[1]])
     # right_vs.append([bounds[0], 0])
 
-    return [left_vs, right_vs, border_east, border_west, border_north, border_south]
+    return [left_vs, right_vs]
+    # return [left_vs, right_vs, border_east, border_west, border_north, border_south]

@@ -59,6 +59,7 @@ class ShipGame():
 
     def gen_level(self):
 
+        # print("GENERATING RIVER POLY")
         poly = game_map.gen_river_poly(self.bounds)
 
         self.level = GeoMap(poly, self.bounds)
@@ -69,7 +70,7 @@ class ShipGame():
 
     def load_level(self):
 
-        print("Load level")
+        # print("Load level")
         poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
 
         self.level = GeoMap(poly, self.bounds)
@@ -283,8 +284,6 @@ class ShipGame():
     # DEFAULT_SPAWN_POINT = Vec2d(10, 20)
     def reset(self, spawn_point=None):
 
-        print(">>>>>>> RESETTING GAME ")
-
         if spawn_point is None:
             spawn_point = Vec2d(self.bounds[0] / 2, 25)
         if not isinstance(spawn_point, Vec2d):
@@ -296,15 +295,13 @@ class ShipGame():
         self.space = pm.Space()
         self.space.damping = 0.4
 
-        print("CREATING ENVIRONMENT .... ")
+        # print("CREATING ENVIRONMENT .... ")
         self.create_environment()
-        self.gen_goal_path(10, Vec2d(self.bounds[0] / 2, 50))
+        self.gen_goal_path(5, Vec2d(self.bounds[0] / 2, 50))
         self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
 
         self.player.shape.collision_type = 0
         self.setup_collision_handlers()
-
-        print("<<<<<<<<<<< GAME IS RESET! ")
 
     def add_default_traffic(self):
         self.ships.append(self.add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
@@ -329,52 +326,18 @@ class ShipGame():
         :return:
         """
 
-        t_start = time.time()
-
-        x_margin = 50
-        # x_end = np.random.randint(self.bounds[0] / 2 - 10, self.bounds[0] / 2 + 10)
-        # y_end = np.random.randint(self.bounds[1] - 10, self.bounds[1] - 10)
-
-        x_end = self.bounds[0] / 2
-        y_end = self.bounds[1]
-
-        max_n = 5
-        x_delta = (x_end - start_pos.x) / max_n
-        y_delta = (y_end - start_pos.y) / max_n
-
-        jitter = 40
-        tolerance = 50
-
-        max_attempts = 1000
+        y_delta = self.bounds[1] / (n+1)
+        x_middle = self.bounds[0] / 2
+        x_jitter = 50
+        y_jitter = 20
 
         for i in range(1, n+1):
-            attempts = 0
-            invalid_pos = True
 
-            while invalid_pos:
-                gx = start_pos.x + x_delta * i + random.randint(-jitter, jitter)
-                gy = start_pos.y + y_delta * i + random.randint(-jitter, jitter)
-                invalid_pos = False
+            y = y_delta*i + random.randint(-y_jitter,y_jitter)
+            x = random.randint(-x_jitter,x_jitter) + x_middle
 
-                # print(f"ATTEMPT #{attempts}")
-                attempts += 1
+            self.add_goal(x,y)
 
-                for shape in self.level.shapes:
-
-                    ret = shape.point_query((gx, gy))
-                    if ret[1].distance < tolerance:
-                        invalid_pos = True
-
-                if attempts >= max_attempts:
-                    break
-
-            if not invalid_pos:
-                self.add_goal(gx, gy)
-
-        t_end = time.time()
-        elapsed = t_end - t_start
-
-        print(f"Generating goals took {elapsed} seconds")
 
     def closest_goal(self):
         if len(self.goals):
