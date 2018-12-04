@@ -11,6 +11,7 @@ from gym.utils import seeding
 from pymunk import Vec2d
 
 from ship_gym.curriculum import Curriculum
+from ship_gym.game import ShipGame
 
 DEFAULT_STATE_VAL = -1
 
@@ -26,7 +27,7 @@ class ShipEnv(Env):
         print("Delete ShipEnv")
 
     # TODO: Derive the discrete actions
-    def __init__(self, ship_game, config, max_steps=1000, history_size=2, n_ship_track=0, map=None):
+    def __init__(self, config, max_steps=1000, history_size=2):
 
         # TODO: Should add some basic sanity checks (max_steps > 0 etc.)
         self.last_action = None
@@ -35,23 +36,28 @@ class ShipEnv(Env):
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
-        self.game = ship_game
+
+        self.game = ShipGame(config["speed"], config["fps"], config["game_bounds"])
+
 
         self.config = config
         self.episodes_count = -1 # Because the first reset will increment it to 0
 
         # TODO: This is a mess of too many parameters and poorly named ones
-        self.n_ship_track = n_ship_track
         self.history_size = history_size
-        self.n_states = (self.n_ship_track + 1 + 1) * 2 + 1 + 1
+
+        """P is the player position
+        A is the player angle
+        R is the rudder angle
+        G is the nearest goal position
+        L are the lidar values
+        N is the number of rays lidar uses
+        """
+        self.n_states = 2 + 1 + 1 + 2 + self.game.player.lidar.n_beams
         self.states_history = self.n_states * self.history_size
-        if self.n_ship_track < 0:
-            raise ValueError("n_ship_track must be non-negative")
+
         if self.history_size < 1:
             raise ValueError("history_size must be greater than zero")
-        if len(self.game.ships) > self.n_ship_track:
-            print("* WARNING * There are more ships in the self.game than can be stored by this ship_gym configuration. "
-                  "You should increase the N_SHIP_POSITIONS")
         self.observation_space = Box(low=0, high=max(self.game.bounds), shape=(self.states_history,), dtype=np.uint8)
 
         # print(" *** SHIP-GYM INITIALIZED *** ")
@@ -85,15 +91,15 @@ class ShipEnv(Env):
 
         Layout of a single time step state is like this:
 
-        Px Py R Gx Gy S1x S1y S2x S2y S3x S3y ... SNx SNy
+        Px Py R Gx Gy L1 L2 ... Ln
 
         Where
         P is the player position
         A is the player angle
         R is the rudder angle
-        G is the goal position
-        S are the ship positions
-        N is the number of ships its tracking
+        G is the nearest goal position
+        L are the lidar values
+        N is the number of rays lidar uses
 
 
         :return: the complete history buffer of states extended with the most recent one

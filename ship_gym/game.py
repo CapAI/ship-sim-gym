@@ -315,23 +315,27 @@ class ShipGame():
         :return:
         """
 
-        x_end = np.random.randint(30, self.bounds[0] - 30)
+        x_margin = 50
+        x_end = np.random.randint(self.bounds[0] / 2 - 50, self.bounds[0] / 2 + 50)
         y_end = np.random.randint(self.bounds[1] - 60, self.bounds[1] - 30)
 
         max_n = 5
         x_delta = (x_end - start_pos.x) / max_n
         y_delta = (y_end - start_pos.y) / max_n
 
-        jitter = 20
+        jitter = 0
         tolerance = 50
 
-        for i in range(1, n+1):
+        max_attempts = 1000
 
+        for i in range(1, n+1):
+            attempts = 0
             invalid_pos = True
             while invalid_pos:
                 gx = start_pos.x + x_delta * i + random.randint(-jitter, jitter)
                 gy = start_pos.y + y_delta * i + random.randint(-jitter, jitter)
                 invalid_pos = False
+                attempts += 1
 
                 for shape in self.level.shapes:
 
@@ -339,11 +343,11 @@ class ShipGame():
                     if ret[1].distance < tolerance:
                         invalid_pos = True
 
+                if attempts >= max_attempts:
+                    break
 
-
-
-
-            self.add_goal(gx, gy)
+            if not invalid_pos:
+                self.add_goal(gx, gy)
 
     def closest_goal(self):
         if len(self.goals):

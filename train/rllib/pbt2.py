@@ -13,8 +13,8 @@ if __name__ == '__main__':
 
 
     def env_creator(env_config):
-        game = ShipGame(speed=20, fps=10000, bounds=(800, 800))
-        env = ShipEnv(game, env_config)
+
+        env = ShipEnv(env_config)
 
         return env
 
