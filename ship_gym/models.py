@@ -119,6 +119,16 @@ class GeoMap(object):
         print("")
 
     def gen_shapes(self, vertex_group):
+        self.shapes = list()
+        for vs, body in zip(vertex_group, self.bodies):
+
+            shape = pm.Poly(body, vs)
+            shape.color = (139, 69, 19)
+            shape.collision_type = 1
+
+            self.shapes.append(shape)
+
+    def gen_shapes_reorient(self, vertex_group):
         """
         Generate shapes
         :param vertex_group:
@@ -170,18 +180,18 @@ class GeoMap(object):
             # shape.friction = 0.5
             # shape.color = color
 
-
             # shape = pm.Poly(body, vertices)
             # shape.collision_type = 1
 
             # print()
             # vs = [v * ]
-            transform = Transform(tx=tx, ty=ty)
+            # transform = Transform(tx=tx, ty=ty)
             # transform = Transform(a=sx, d=sy)
-            print(transform)
+            # print(transform)
 
             vs = [((x + tx) * sx,(y + ty) * sy) for (x,y) in vertices]
             print("-----")
+            print(len(vertices))
             print(vertices)
             print(vs)
             print("-----")
@@ -193,13 +203,16 @@ class GeoMap(object):
                 return tuple(rgbl)
 
             print(shape.get_vertices())
-            shape.color = pygame.color.THECOLORS["red"]
+            # shape.color = pygame.color.THECOLORS["red"]
             shape.color = random_color()
             shape.collision_type = 1
 
             # print("NEW SHAPE = ", shape.update(Transform(10, 0, 0, 10, 0, 0)))
+            if len(vertices) > 100:
+                print(vertices)
+                self.shapes.append(shape)
+                # break
 
-            self.shapes.append(shape)
 
             # break
 

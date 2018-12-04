@@ -59,7 +59,9 @@ class ShipGame():
     def load_level(self):
 
         print("Load level")
-        poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
+        # poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
+
+        poly = game_map.gen_river_poly(self.bounds)
         self.level = GeoMap(poly, self.bounds)
 
         # Add all the shapes to the space
@@ -90,7 +92,6 @@ class ShipGame():
             # shape.friction = 0.5
 
             # c_i = random.choice(pygame.color.THECOLORS)
-
 
             # shape.collision_type = 1
 

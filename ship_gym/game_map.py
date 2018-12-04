@@ -1,6 +1,7 @@
 # From dashboard/visualizer:
 import json
 import pickle
+import random
 
 from ship_gym.models import GeoMap
 
@@ -94,3 +95,69 @@ def load_from_pickle(path):
 
     return vertex_group
 
+def gen_river_poly(bounds, N=10, width_frac=0.4):
+
+    """
+    Create a simple river / channel like environment with no branches
+    :param bounds:
+    :param N:
+    :return:
+    """
+
+    delta = bounds[1] / (N)
+    avg_width = int((1-width_frac)*bounds[0] / 2)
+
+    print(avg_width)
+
+    def river_bank_helper(n_segments, x_min, x_max):
+        vs = [[x_min, 0]]
+
+        for i in range(0, n_segments + 1):
+
+            skip_jitter = int(i != 0 and i != n_segments)
+            if not skip_jitter:
+                y_jitter = random.randrange(int(-delta / 4), int(delta / 4))
+            else:
+                y_jitter = 0
+            # y_jitter = 0
+            y = delta * i + y_jitter
+
+            # width = int(avg_width / 2)
+            x = random.randint(x_min, x_max)
+
+            vs.append([x, y])
+        # vs.append([x_min, bounds[1]])
+        return vs
+
+    # Left side polygon
+
+    # Make it slightly less symmetrical
+
+    # left_vs = list([[0,0], [0, avg_width]])
+    # left_vs.extend(river_bank(N, 0, 100))
+
+    # close the loop
+    # left_vs.append([0, bounds[1]])
+
+    left_vs = river_bank_helper(N, 0, avg_width)
+    left_vs.extend([[0, bounds[1]], [0,0]])
+
+    right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
+    right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
+
+    # right_vs.append(bounds)
+    # right_vs.append([bounds[0], 0])
+
+    # right_vs.extend(river_bank(N))
+    # for i in range(0, N + 1):
+    #     y = delta * i
+    #     width = avg_width / 2
+    #     x = random.randint(bounds[0] - width, bounds[0])
+    #
+    #     right_vs.append([x, y])
+
+    # close the loop
+    # right_vs.append([bounds[0], bounds[1]])
+    # right_vs.append([bounds[0], 0])
+
+    return [left_vs, right_vs]
