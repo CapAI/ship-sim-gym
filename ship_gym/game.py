@@ -54,47 +54,25 @@ class ShipGame():
         print("Init game at fps = ", fps)
 
         self.reset()
-        self.load_level()
+        # self.load_level()
+        self.gen_level()
+
+    def gen_level(self):
+        poly = game_map.gen_river_poly(self.bounds)
+        self.level = GeoMap(poly, self.bounds)
+
+
+        for body, shape in zip(self.level.bodies, self.level.shapes):
+            self.space.add(body, shape)
 
     def load_level(self):
 
         print("Load level")
-        # poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
+        poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
 
-        poly = game_map.gen_river_poly(self.bounds)
         self.level = GeoMap(poly, self.bounds)
 
-        # Add all the shapes to the space
-        # print(self.level.bb())
-        bb = self.level.bb()
-        print(bb)
-
-        # Realign map to bounds
-        print(bb.left, bb.top)
-
-        scale_x = self.bounds[0] / (bb.right - bb.left)
-        scale_y = self.bounds[1] / (bb.top - bb.bottom)
-
-        self.level.transform(Transform(a=scale_x, d=scale_y, tx=-bb.left, ty=-bb.bottom))
-
         for body, shape in zip(self.level.bodies, self.level.shapes):
-
-            print("Add level body, shape : ", body, shape)
-
-            # mass = 2
-            # points = [(x[0] * 1, x[1] * 1) for x in SHIP_TEMPLATE]
-            # moment = pm.moment_for_poly(mass, points)
-            #
-            # # moment = 1000
-            # body = pm.Body(mass, moment)
-            # body.position = Vec2d(300, 300)
-            # shape = pm.Poly(body, points)
-            # shape.friction = 0.5
-
-            # c_i = random.choice(pygame.color.THECOLORS)
-
-            # shape.collision_type = 1
-
             self.space.add(body, shape)
 
 
@@ -236,6 +214,7 @@ class ShipGame():
         :param z:
         :return:
         """
+        print("Collide with environment!!")
         self.colliding = True
         return True
 
@@ -251,9 +230,11 @@ class ShipGame():
         return False
 
 
-    DEFAULT_SPAWN_POINT = Vec2d(10, 20)
-    def reset(self, spawn_point=DEFAULT_SPAWN_POINT):
+    # DEFAULT_SPAWN_POINT = Vec2d(10, 20)
+    def reset(self, spawn_point=None):
 
+        if spawn_point is None:
+            spawn_point = Vec2d(self.bounds[0] / 2, 25)
         if not isinstance(spawn_point, Vec2d):
             spawn_point = Vec2d(spawn_point)
 
@@ -281,6 +262,8 @@ class ShipGame():
         goal_agent_col = self.space.add_collision_handler(0, 2)
         goal_agent_col.begin = self.collide_goal
 
+        self.space.add_collision_handler(0, 3)
+
     def closest_goal(self):
         if len(self.goals):
             min_goal = self.goals[0]
@@ -292,7 +275,6 @@ class ShipGame():
                     min_distance = dist
                     min_goal = goal
 
-            # print("Min goal = ", min_goal)
             return min_goal
         return None
 

@@ -104,6 +104,7 @@ class GeoMap(object):
         self.bounds = bounds
         self.gen_bodies(poly_list) #IMPORTANT TO DO FIRST!!
         self.gen_shapes(poly_list)
+        # self.gen_shapes_reorient(poly_list)
 
 
 
