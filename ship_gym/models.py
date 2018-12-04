@@ -57,8 +57,9 @@ class LiDAR(object):
         cy = self.ship.y + (bb.top - bb.bottom) / 2
         origin = Vec2d(cx, cy)
 
-        print("----------------------------------------")
+        # print("----------------------------------------")
         self.query_results = list()
+        self.readings = [-1] * self.n_beams
         for i in range(self.n_beams):
 
             query_result = None
@@ -70,13 +71,15 @@ class LiDAR(object):
 
                 query_result = shape.segment_query(origin, dest)
                 if query_result.shape is not None:
+
+                    distance = query_result.point.get_distance(origin)
+                    # print(distance)
+                    self.vals[i] = distance
                     break
 
-
-            # if query_result.shape is not None:
             self.query_results.append(query_result)
 
-        print(f"LIDAR QUERY FOUND {len(self.query_results)} RESULTS ... ")
+        # print(f"LIDAR QUERY FOUND {len(self.query_results)} RESULTS ... ")
         return self.query_results
 
     def values(self):
@@ -85,6 +88,8 @@ class LiDAR(object):
         :return:
         """
         for q in self.query_results:
+            if q.shape is not None:
+                return
 
 
 class Ship(object):

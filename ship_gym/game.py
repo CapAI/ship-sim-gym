@@ -219,7 +219,6 @@ class ShipGame():
 
         if self.debug_mode:
             res = self.player.lidar.query_results
-            print(len(res))
             for r in res:
                 # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
                 if r.shape is None:
@@ -287,6 +286,7 @@ class ShipGame():
         self.space.damping = 0.4
 
         self.create_environment()
+        self.gen_goal_path(10, Vec2d(self.bounds[0] / 2, 50))
         self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
 
         self.player.shape.collision_type = 0
@@ -305,6 +305,45 @@ class ShipGame():
         goal_agent_col.begin = self.collide_goal
 
         self.space.add_collision_handler(0, 3)
+
+    def gen_goal_path(self, n, start_pos):
+
+        """
+        NOTE: This is wildly inefficient but at least it's general!
+        :param n:
+        :param start_pos:
+        :return:
+        """
+
+        x_end = np.random.randint(30, self.bounds[0] - 30)
+        y_end = np.random.randint(self.bounds[1] - 60, self.bounds[1] - 30)
+
+        max_n = 5
+        x_delta = (x_end - start_pos.x) / max_n
+        y_delta = (y_end - start_pos.y) / max_n
+
+        jitter = 20
+        tolerance = 50
+
+        for i in range(1, n+1):
+
+            invalid_pos = True
+            while invalid_pos:
+                gx = start_pos.x + x_delta * i + random.randint(-jitter, jitter)
+                gy = start_pos.y + y_delta * i + random.randint(-jitter, jitter)
+                invalid_pos = False
+
+                for shape in self.level.shapes:
+
+                    ret = shape.point_query((gx, gy))
+                    if ret[1].distance < tolerance:
+                        invalid_pos = True
+
+
+
+
+
+            self.add_goal(gx, gy)
 
     def closest_goal(self):
         if len(self.goals):

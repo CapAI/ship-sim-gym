@@ -107,7 +107,7 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     delta = bounds[1] / (N)
     avg_width = int((1-width_frac)*bounds[0] / 2)
 
-    print(avg_width)
+    # print(avg_width)
 
     def river_bank_helper(n_segments, x_min, x_max):
         vs = [[x_min, 0]]
@@ -134,18 +134,8 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
 
             vs.append([x, y])
 
-        print(f"Generated river bank poly with {len(vs)} vertices")
+        # print(f"Generated river bank poly with {len(vs)} vertices")
         return vs
-
-    # Left side polygon
-
-    # Make it slightly less symmetrical
-
-    # left_vs = list([[0,0], [0, avg_width]])
-    # left_vs.extend(river_bank(N, 0, 100))
-
-    # close the loop
-    # left_vs.append([0, bounds[1]])
 
     left_vs = river_bank_helper(N, 0, avg_width)
     left_vs.extend([[0, bounds[1]], [0,0]])
@@ -153,19 +143,8 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
 
-    right_vs.append(bounds)
-    right_vs.append([bounds[0], 0])
-
-    # right_vs.extend(river_bank(N))
-    # for i in range(0, N + 1):
-    #     y = delta * i
-    #     width = avg_width / 2
-    #     x = random.randint(bounds[0] - width, bounds[0])
-    #
-    #     right_vs.append([x, y])
-
     # close the loop
-    right_vs.append([bounds[0], bounds[1]])
-    right_vs.append([bounds[0], 0])
+    # right_vs.append([bounds[0], bounds[1]])
+    # right_vs.append([bounds[0], 0])
 
     return [left_vs, right_vs]
