@@ -129,9 +129,11 @@ class ShipEnv(Env):
         player = self.game.player
         if player.x < 0 or player.x > self.game.bounds[0]:
             print("X out of bounds")
+            # 1/0
             return True
         elif player.y < 0 or player.y > self.game.bounds[1]:
             print("Y out of bounds")
+            # 1 / 0
             return True
 
         if self.step_count >= self.env_config.MAX_STEPS:

@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import time
 
 import numpy as np
 import pygame
@@ -59,9 +60,9 @@ class ShipGame():
     def gen_level(self):
 
         poly = game_map.gen_river_poly(self.bounds)
-        self.level = GeoMap(poly, self.bounds)
 
-        # self.level = GeoMap([], self.bounds)
+        self.level = GeoMap(poly, self.bounds)
+        # self.level = GeoMap([[[10,10],[10,20]]], self.bounds)
 
         for body, shape in zip(self.level.bodies, self.level.shapes):
             self.space.add(body, shape)
@@ -282,6 +283,8 @@ class ShipGame():
     # DEFAULT_SPAWN_POINT = Vec2d(10, 20)
     def reset(self, spawn_point=None):
 
+        print(">>>>>>> RESETTING GAME ")
+
         if spawn_point is None:
             spawn_point = Vec2d(self.bounds[0] / 2, 25)
         if not isinstance(spawn_point, Vec2d):
@@ -293,12 +296,15 @@ class ShipGame():
         self.space = pm.Space()
         self.space.damping = 0.4
 
+        print("CREATING ENVIRONMENT .... ")
         self.create_environment()
         self.gen_goal_path(10, Vec2d(self.bounds[0] / 2, 50))
         self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
 
         self.player.shape.collision_type = 0
         self.setup_collision_handlers()
+
+        print("<<<<<<<<<<< GAME IS RESET! ")
 
     def add_default_traffic(self):
         self.ships.append(self.add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
@@ -322,6 +328,8 @@ class ShipGame():
         :param start_pos:
         :return:
         """
+
+        t_start = time.time()
 
         x_margin = 50
         # x_end = np.random.randint(self.bounds[0] / 2 - 10, self.bounds[0] / 2 + 10)
@@ -362,6 +370,11 @@ class ShipGame():
 
             if not invalid_pos:
                 self.add_goal(gx, gy)
+
+        t_end = time.time()
+        elapsed = t_end - t_start
+
+        print(f"Generating goals took {elapsed} seconds")
 
     def closest_goal(self):
         if len(self.goals):

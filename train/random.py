@@ -8,8 +8,8 @@ from ship_gym.config import EnvConfig, GameConfig
 
 
 gc = GameConfig
-gc.FPS = 2000
-gc.SPEED = 50
+gc.FPS = 1000
+gc.SPEED = 100
 
 env = ShipEnv(game_config=gc, env_config=EnvConfig)
 
@@ -30,7 +30,7 @@ for _ in range(10000):
             env.reset()
             break
 
-        time.sleep(0.1)
+        # time.sleep(0.1)
         print(ret)
 
         # time.sleep(0.0)
