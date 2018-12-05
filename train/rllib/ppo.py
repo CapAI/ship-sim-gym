@@ -2,6 +2,7 @@ import random
 
 import ray
 from ray.rllib.agents.ppo import ppo
+from ray.tune import run_experiments, tune, register_env
 
 from ray import tune
 from ray.tune.schedulers import PopulationBasedTraining

@@ -36,7 +36,7 @@ class ShipGame():
 
     __temp_fps = 0
 
-    def __init__(self, game_config=None, debug_mode=True):
+    def __init__(self, game_config=None):
 
         if game_config is None:
             game_config = GameConfig
@@ -48,6 +48,7 @@ class ShipGame():
         self.clock = pygame.time.Clock()
         self.goal_reached = False
         self.colliding = False
+
         self.debug_mode = game_config.DEBUG
 
         os.makedirs(self.game_frame_dir, exist_ok=True)
@@ -56,8 +57,12 @@ class ShipGame():
         pygame.display.set_caption("Ship Sim Gym")
         pygame.key.set_repeat(10, 10)
 
-        print("Init game at speed = ", self.speed)
-        print("Init game at fps = ", self.fps)
+        print("-"*30)
+        print("SHIP GAME INITIALIZED")
+        print("DEBUG MODE = ", self.debug_mode)
+        print("GAME SPEED = ", self.speed)
+        print("GAME FPS   = ", self.fps)
+        print("-"*30, "\n")
 
         self.reset()
 
