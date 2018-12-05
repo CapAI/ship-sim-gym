@@ -80,12 +80,13 @@ def load_from_pickle(path):
     # return [[[100, 100], [100, 200], [200, 200], [200, 100]]]
 
     '''
-    *---------------------------------------------------------
+    *---------------------------------------------------------*
+    |                                                         |
+    |                                                          
     |
     |
     |
-    |
-    |
+    *---------------------------------------------------------*
     '''
     # return [[[1, 0], [2, 0], [2, 1]]]
     # return [[[1, 0], [2, 0], [2, 1]], [[1, 0.5], [1, 1], [1.5, 1]]]
@@ -95,7 +96,7 @@ def load_from_pickle(path):
 
     return vertex_group
 
-def gen_river_poly(bounds, N=10, width_frac=0.4):
+def gen_river_poly(bounds, N=10, width_frac=0.5):
 
     """
     Create a simple river / channel like environment with no branches
@@ -104,43 +105,50 @@ def gen_river_poly(bounds, N=10, width_frac=0.4):
     :return:
     """
     # print("Generating riverbank polies for N =", N)
-    delta = bounds[1] / N
-    avg_width = int((1-width_frac)*bounds[0] / 2)
+
+    x_start = 0
+    y_start = -100
+    y_delta = (bounds[1]+50-y_start) / N
+
+    bank_width = width_frac * bounds[0] / 2
 
     # print(avg_width)
 
+
     def river_bank_helper(n_segments, x_min, x_max):
-        vs = [[x_min, 0]]
-        x = random.randint(x_min, x_max)
-        jitter_val = round((x_max - x_min) / 4)
 
-        vs.append([x_min, 0])
+        vs = list()
 
-        for i in range(0, n_segments+1):
+        y_jitter = 20
+        x_jitter = 50
+        x_middle = x_min + (x_max - x_min)
+        max_tries = 1000
 
-            skip_jitter = int(i != 0 and i != n_segments)
-            if not skip_jitter:
-                y_jitter = random.randrange(round(-delta / 4), round(delta / 4))
-            else:
-                y_jitter = 0
-            # y_jitter = 0
-            y = round(delta * i + y_jitter)
+        for i in range(1, n_segments+1):
 
-            # width = int(avg_width / 2)
+            invalid_pos = True
+            try_i = 0
+            while invalid_pos:
+                x = random.gauss(x_middle, x_jitter)
+                y = y_start + random.gauss(y_delta * i, y_jitter)
+                # invalid_pos = False
+                invalid_pos = x < x_min or x > x_max
+                try_i += 1
+                # print(x,y)
 
-            x = random.randint(x - jitter_val, x + jitter_val)
-            while x > x_max or x < x_min:
-                x = random.randint(x - jitter_val, x + jitter_val)
+                if try_i >= max_tries:
+                    print("OH MY ... ALL TRIES EXHAUSTED. RETURNING INVALID TERRAIN")
+                    break
 
-            vs.append([x, y])
+            vs.append([x,y])
 
 
         return vs
 
-    left_vs = river_bank_helper(N, 0, avg_width)
+    left_vs = river_bank_helper(N, 0, bank_width)
     left_vs.extend([[0, bounds[1]], [0, 0]])
 
-    right_vs = river_bank_helper(N, bounds[0] - avg_width, bounds[0])
+    right_vs = river_bank_helper(N, bounds[0] - bank_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
 
     # print("GEN LEVEL DONE  !!! ")

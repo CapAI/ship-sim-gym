@@ -331,12 +331,29 @@ class ShipGame():
         x_jitter = 50
         y_jitter = 20
 
+        tolerance = 60
+        filter = pymunk.ShapeFilter(mask=pymunk.ShapeFilter.ALL_MASKS ^ 0b1) # This has not been properly tested!
+
         for i in range(1, n+1):
 
             y = y_delta*i + random.randint(-y_jitter,y_jitter)
-            x = random.randint(-x_jitter,x_jitter) + x_middle
 
-            self.add_goal(x,y)
+
+            try:
+                left_ret = self.space.segment_query((self.bounds[0]/2, y), (0, y), 10, filter)[0]
+                right_ret = self.space.segment_query((self.bounds[0] / 2, y), (self.bounds[0], y), 10, filter)[0]
+
+                print(left_ret.point)
+                print(right_ret.point)
+
+                x = np.random.uniform(left_ret.point.x + tolerance, right_ret.point.x - tolerance)
+
+                self.add_goal(x, y)
+
+            except Exception as e:
+                # print("WOOPS", e)
+                x = x_middle * i + random.randint(-x_jitter, x_jitter)
+                self.add_goal(x, y)
 
 
     def closest_goal(self):

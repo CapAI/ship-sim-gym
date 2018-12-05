@@ -252,7 +252,7 @@ class ShipEnv(Env):
             self.game.add_goal(gx, gy)
 
     def reset(self):
-        print(">>>> SHIP_ENV RESET!")
+        # print(">>>> SHIP_ENV RESET!")
         self.game.reset()
         self.check_curriculum()
 

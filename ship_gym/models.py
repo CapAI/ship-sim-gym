@@ -119,7 +119,7 @@ class Ship(object):
         shape.color = color   
         shape.collision_type = 1
         # shape.transform =
-
+        self.filter = pm.ShapeFilter(categories=0b1)
         self.width = width
         self.height = height
         self.shape = shape
