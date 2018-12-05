@@ -18,8 +18,6 @@ if __name__ == '__main__':
     game_config.SPEED = 30
     game_config.BOUNDS = (1000, 1000)
 
-
-
     def env_creator(env_config):
 
         env_config = EnvConfig

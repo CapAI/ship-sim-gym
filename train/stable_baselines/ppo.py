@@ -68,14 +68,8 @@ def make_env(rank, bounds, game_fps, game_speed, max_steps, seed=0):
         def _init():
             env_config = EnvConfig
             env = ShipEnv(game_config, env_config)
-            # env.seed(seed + rank)
             return env
-            #
-            # env = Monitor(env, log_dir, allow_early_resets=True)
 
-            # return env
-
-        # set_global_seeds(seed)
         return _init
 
 def get_model_path(n_goals, lr, n_obstacles=0):

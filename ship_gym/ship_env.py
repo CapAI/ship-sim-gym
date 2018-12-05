@@ -60,10 +60,8 @@ class ShipEnv(Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
-
         # Important to actually seed it!!! I thought above would work but it's not enough
         np.random.seed(seed)
-
         return [seed]
 
     def determine_reward(self):
@@ -71,9 +69,13 @@ class ShipEnv(Env):
         if self.game.colliding:
             self.reward = -1.0
         if self.game.goal_reached:
-            # if len(self.game.goals) <= 5:
-                # print(f"LAST 5 GOALS : GOAL #{self.game.total_goals - len(self.game.goals)} / {self.game.total_goals} REACHED")
             self.reward = 1.0
+
+        # TODO: Code duplication with is_done()
+        elif self.game.player.x < 0 or self.game.player.x > self.game.bounds[0]:
+            self.reward = -1
+        elif self.game.player.y < 0 or self.game.player.y > self.game.bounds[1]:
+            self.reward = -1
         else:
             self.reward = STEP_PENALTY  # Small penalty
 
@@ -132,8 +134,7 @@ class ShipEnv(Env):
             # 1/0
             return True
         elif player.y < 0 or player.y > self.game.bounds[1]:
-            print("Y out of bounds")
-            # 1 / 0
+
             return True
 
         if self.step_count >= self.env_config.MAX_STEPS:
@@ -156,29 +157,6 @@ class ShipEnv(Env):
 
                 # print(int)
 
-
-        # Easy non generic implementation
-        # exp_reward = 0.9 * self.n_goals - self.n_obstacles * 0.4
-        # exp_reward = 0
-        #
-        # if self.cumulative_reward > exp_reward:
-        # 	print("Training progressed!")
-        # 	self.lesson += 1
-        #
-        # 	if self.lesson < 5:
-        # 		self.n_goals += 1
-        # 	else:
-        # 		self.n_obstacles += 1
-
-
-        # if self.curriculum is None:
-        # 	return
-        #
-        # else:
-        # 	if self.curriculum.progress(self)
-        # 	for param in self.curriculum.param_names:
-        # 		try:
-        # 			self[]
 
 
 
@@ -261,9 +239,9 @@ class ShipEnv(Env):
         self.cumulative_reward = 0
         self.step_count = 0
         self.episodes_count += 1
+
         n = self.n_states * self.env_config.HISTORY_SIZE
         self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
-
         self.setup_game_env()
         self.__add_states()
 

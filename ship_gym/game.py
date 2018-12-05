@@ -11,6 +11,7 @@ import pymunk as pm
 import pymunk.pygame_util
 
 from ship_gym import game_map
+from ship_gym.config import GameConfig
 from ship_gym.models import GameObject, Ship, GeoMap, LiDAR
 
 SHIP_TEMPLATE = [(0, 0), (0, 10), (5, 15), (10, 10), (10, 0)]
@@ -35,7 +36,10 @@ class ShipGame():
 
     __temp_fps = 0
 
-    def __init__(self, game_config, debug_mode=True):
+    def __init__(self, game_config=None, debug_mode=True):
+
+        if game_config is None:
+            game_config = GameConfig
 
         self.speed = game_config.SPEED
         self.fps = game_config.FPS
@@ -171,7 +175,7 @@ class ShipGame():
                 sys.exit(0)
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                     sys.exit(0)
 
                 elif event.key == pygame.K_w:
@@ -227,24 +231,24 @@ class ShipGame():
             options = pm.pygame_util.DrawOptions(self.screen)
             options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
             self.space.debug_draw(options)
-            # res = self.player.lidar.query_results
-            # for r in res:
-            #     # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
-            #     if r is not None and r.shape is None:
-            #         p = r.point
-            #         p = self.invert_p(p)
-            #         p = (round(p.x), round(p.y))
-            #
-            #         # Green
-            #         pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
-            #
-            #     else:
-            #         p = r.point
-            #         p = self.invert_p(p)
-            #         p = (round(p.x), round(p.y))
-            #
-            #         # Red circle
-            #         pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
+            res = self.player.lidar.query_results
+            for r in res:
+                # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
+                if r is not None and r.shape is None:
+                    p = r.point
+                    p = self.invert_p(p)
+                    p = (round(p.x), round(p.y))
+
+                    # Green
+                    pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
+
+                else:
+                    p = r.point
+                    p = self.invert_p(p)
+                    p = (round(p.x), round(p.y))
+
+                    # Red circle
+                    pygame.draw.circle(self.screen, (255, 0, 0), p, 10)
 
         p = self.invert_p(self.player.position)
 
@@ -343,9 +347,6 @@ class ShipGame():
                 left_ret = self.space.segment_query((self.bounds[0]/2, y), (0, y), 10, filter)[0]
                 right_ret = self.space.segment_query((self.bounds[0] / 2, y), (self.bounds[0], y), 10, filter)[0]
 
-                print(left_ret.point)
-                print(right_ret.point)
-
                 x = np.random.uniform(left_ret.point.x + tolerance, right_ret.point.x - tolerance)
 
                 self.add_goal(x, y)
@@ -379,7 +380,8 @@ def main():
     import os
 
     cwd = os.getcwd()
-    # print(cwd)
+    
+    
     g = ShipGame(debug_mode=True)
 
     while True:
