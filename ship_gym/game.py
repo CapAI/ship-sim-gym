@@ -151,7 +151,14 @@ class ShipGame():
     def get_screen(self):
         return pygame.surfarray.array3d(self.screen)
 
-    def handle_action(self, action):
+    def handle_cont_action(self, action):
+        # print("ACTION = ", action)
+        self.player.move_forward(float(action[0]))
+        rot = (action[1] - 0.5) * 10
+
+        self.player.rotate(rot)
+
+    def handle_discrete_action(self, action):
         if action == 0:
             # print("W pressed : forwards")
             self.player.move_forward()
@@ -185,16 +192,16 @@ class ShipGame():
 
                 elif event.key == pygame.K_w:
                     # print("W pressed")
-                    self.handle_action(0)
+                    self.handle_discrete_action(0)
                 elif event.key == pygame.K_s:
                     # print("S pressed")
-                    self.handle_action(1)
+                    self.handle_discrete_action(1)
                 elif event.key == pygame.K_a:
                     # print("A pressed")
-                    self.handle_action(2)
+                    self.handle_discrete_action(2)
                 elif event.key == pygame.K_d:
                     # print("D pressed")
-                    self.handle_action(3)
+                    self.handle_discrete_action(3)
                 elif event.key == pygame.K_r:
                     self.observe_mode = not self.observe_mode
 
