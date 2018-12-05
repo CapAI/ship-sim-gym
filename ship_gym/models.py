@@ -148,12 +148,12 @@ class Ship(object):
         if self.lidar:
             self.lidar.query()
 
-    def move_forward(self):
-        self.body.apply_force_at_local_point(self.force_vector, self.point_of_thrust)
+    def move_forward(self, force=1):
+        self.body.apply_force_at_local_point(self.force_vector * force, self.point_of_thrust)
         # self.draw_force()
 
-    def move_backward(self):
-        self.body.apply_force_at_local_point((0, -30), (0, -5))
+    def move_backward(self, force=1):
+        self.body.apply_force_at_local_point(self.force_vector * -force, (0, -5))
         # self.draw_force()
 
     def clamp_rudder(self):

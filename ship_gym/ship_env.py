@@ -21,7 +21,7 @@ STEP_PENALTY = -0.01
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
-    action_space = Discrete(4)
+    action_space = Box(low=0, high=1, shape=(2,), dtype=np.float16)
     reward_range = (-1, 1)
 
     def __del__(self):
@@ -31,7 +31,6 @@ class ShipEnv(Env):
     def __init__(self, game_config, env_config):
 
         # TODO: Should add some basic sanity checks (max_steps > 0 etc.)
-        self.last_action = None
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
@@ -163,9 +162,11 @@ class ShipEnv(Env):
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        # print("Step #", self.step_count)
+        if isinstance(self.action_space, Box):
+            self.game.handle_cont_action(action)
+        else:
+            self.game.handle_discrete_action(action)
 
-        self.game.handle_action(action)
         self.game.update()
         self.game.render()
 

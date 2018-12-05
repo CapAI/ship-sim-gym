@@ -8,7 +8,7 @@ from ship_gym.config import EnvConfig, GameConfig
 
 
 gc = GameConfig
-
+gc.DEBUG = True
 
 env = ShipEnv(game_config=gc, env_config=EnvConfig)
 
