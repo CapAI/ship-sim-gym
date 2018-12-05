@@ -48,7 +48,7 @@ class ShipGame():
         self.clock = pygame.time.Clock()
         self.goal_reached = False
         self.colliding = False
-        self.debug_mode = debug_mode
+        self.debug_mode = game_config.DEBUG
 
         os.makedirs(self.game_frame_dir, exist_ok=True)
 
@@ -150,16 +150,16 @@ class ShipGame():
         if action == 0:
             # print("W pressed : forwards")
             self.player.move_forward()
-        elif action == 1:
+        # elif action == 1:
             # print("S pressed : backwards")
-            self.player.move_backward()
-        elif action == 2:
+            # self.player.move_backward()
+        elif action == 1:
             # print("A pressed : left")
-            self.player.rotate(-10)
-        elif action == 3:
+            self.player.rotate(-5)
+        elif action == 2:
             # print("D pressed : right")
-            self.player.rotate(+10)
-        elif action == 4:
+            self.player.rotate(+5)
+        elif action == 3:
             # print("Do nothing ... ")
             pass
 
@@ -339,16 +339,15 @@ class ShipGame():
         filter = pymunk.ShapeFilter(mask=pymunk.ShapeFilter.ALL_MASKS ^ 0b1) # This has not been properly tested!
 
         for i in range(1, n+1):
-
-            y = y_delta*i + random.randint(-y_jitter,y_jitter)
-
-
+            y = y_delta*i + random.randint(-y_jitter, y_jitter)
             try:
                 left_ret = self.space.segment_query((self.bounds[0]/2, y), (0, y), 10, filter)[0]
                 right_ret = self.space.segment_query((self.bounds[0] / 2, y), (self.bounds[0], y), 10, filter)[0]
 
-                x = np.random.uniform(left_ret.point.x + tolerance, right_ret.point.x - tolerance)
+                # print(left_ret.point)
+                # print(right_ret.point)
 
+                x = np.random.uniform(left_ret.point.x + tolerance, right_ret.point.x - tolerance)
                 self.add_goal(x, y)
 
             except Exception as e:
