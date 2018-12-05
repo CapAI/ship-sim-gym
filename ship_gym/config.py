@@ -18,6 +18,7 @@ class EnvConfig(object):
 
 
 class GameConfig(object):
+    DEBUG = False
     FPS = 1000
     SPEED = 10 # Speed multiplier
     BOUNDS = (600, 600)

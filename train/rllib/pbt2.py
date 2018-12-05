@@ -42,8 +42,8 @@ if __name__ == '__main__':
     pbt = PopulationBasedTraining(
         time_attr="time_total_s",
         reward_attr="episode_reward_mean",
-        perturbation_interval=300, # 5 mins
-        resample_probability=0.25,
+        perturbation_interval=600, # 10 mins
+        resample_probability=0.33,
 
         # Specifies the mutations of these hyperparams
         hyperparam_mutations={

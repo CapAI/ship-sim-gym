@@ -8,8 +8,9 @@ from ship_gym.config import EnvConfig, GameConfig
 
 
 gc = GameConfig
-gc.FPS = 10
-gc.SPEED = 100
+gc.FPS = 30
+gc.SPEED = 10
+gc.DEBUG = True
 
 env = ShipEnv(game_config=gc, env_config=EnvConfig)
 

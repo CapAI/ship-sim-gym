@@ -21,7 +21,7 @@ STEP_PENALTY = -0.01
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
-    action_space = Discrete(5)
+    action_space = Discrete(4)
     reward_range = (-1, 1)
 
     def __del__(self):

@@ -94,7 +94,7 @@ class LiDAR(object):
 
 class Ship(object):
 
-    def __init__(self, x, y, width, height, color, mass=2, lidar=None):
+    def __init__(self, x, y, width, height, color, mass=5, lidar=None):
         """
 
         :param x:
@@ -115,7 +115,7 @@ class Ship(object):
         # Shape creation
         shape = pm.Poly(body, points)
 
-        shape.friction = 0.5
+        shape.friction = 0.7
         shape.color = color   
         shape.collision_type = 1
         # shape.transform =
@@ -126,7 +126,8 @@ class Ship(object):
         self.body = body
         self.force_vector = Vec2d(0, 100)
         self.rudder_angle = 0
-        self.point_of_thrust = self.body.center_of_gravity
+        # self.point_of_thrust = self.body.center_of_gravity
+        self.point_of_thrust = self.shape.bb.center()
         self.max_angle = 10
         self.lidar = lidar
 
