@@ -1,16 +1,26 @@
-# ship-sim-gym
+# Ship Sim Gym
 
-Extremely low-fidelity pygame / pymunk based Ship Simulator with OpenAI gym wrapper
+Low-fidelity high-performance ship simulator built with pygame / pymunk with OpenAI gym wrapper and example scripts for stable-baselines and rllib for training RL agents.
 
-## Installation
+This gym and the accompanying scripts allow you to quickly iterate over different ideas	
 
-Make sure you are not using Python 3.7. It's not supported by ray / rllib and a few others at moment of writing.
+For questions / comments: do not hesitate to do so via the issues or a direct PM to gerardsimons.
 
-## Stable Baselines
+## Requirements
 
-[stable-baselines](https://github.com/hill-a/stable-baselines) has specific prerequisites listed in the README.
+Make sure you are **not** using Python 3.7. It's not supported by ray / rllib and a few others at moment of writing.
 
-## RLlib 
+Code has been developed and tested with Python 3.6
+
+### Pygame / Pymunk
+
+The game is built with pygame and pymunk. pygame is a library that allows for creating windows and drawing primivites. Pymunk is needed for the physics. Both should be pip installable.
+
+### Stable Baselines
+
+[stable-baselines](https://github.com/hill-a/stable-baselines) has specific prerequisites listed in the README, make sure you meet those before continuing.
+
+### RLlib 
 
 `pip install ray[rllib]` should do. See specific version in requirements.txt
 
@@ -24,12 +34,24 @@ Revert back to Redis 2:
 
 `pip install -U redis==2.10.6`
 
-You can try to do a pip install -r requirements.txt
-
-Also see the requirements at each repo, especially stable-baselines has a few local ones.
-
-PyGame instructions should be found separately onine
-
 ## Usage
 
-training scripts are in `agents`.
+Easiest thing is to run the jupyter notebook. Even though the code is mostly just imports from existing scripts it explains quite a bit in the Markdown cells. 
+
+Run from the repo root:
+
+`jupyter notebook notebooks`
+
+If you prefer you can also run the scripts in train manually by calling them as modules. For example to run the PPO trainer of RLLib do:
+
+`python -m train.rllib.ppo`
+
+## Contributing
+
+Again feel free to discuss ideas or propose new features via the issues tab!
+
+If you have an idea for a feature, feel free to create your own feature branch:
+
+`git checkout -b feature/<feature_name>`
+
+Once finished, you can do a pull request. 

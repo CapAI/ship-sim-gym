@@ -1,7 +1,9 @@
+import random
 import time
 
 import gym
 import ship_gym
+import numpy as np
 from ship_gym.ship_env import ShipEnv
 
 from ship_gym.config import EnvConfig, GameConfig
@@ -13,6 +15,7 @@ gc.DEBUG = True
 env = ShipEnv(game_config=gc, env_config=EnvConfig)
 
 env.reset()
+cont = True
 
 for _ in range(10000):
 
@@ -20,8 +23,14 @@ for _ in range(10000):
     for _ in range(100):
         env.render()
 
-        ret = env.step(env.action_space.sample()) # take a random action
+        if cont:
+            ret = env.step(np.random.uniform(-100, 100)) # take a random action
+        else:
+            ret = env.step(env.action_space.sample())  # take a random action
+
         # ret = env.step(0) # take a random action
+
+
         total_reward += ret[1]
 
         if ret[2] == True:

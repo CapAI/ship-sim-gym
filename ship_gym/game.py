@@ -12,29 +12,22 @@ import pymunk.pygame_util
 
 from ship_gym import game_map
 from ship_gym.config import GameConfig
-from ship_gym.models import GameObject, Ship, GeoMap, LiDAR
+from ship_gym.models import GameObject, Ship, PolyEnv, LiDAR
 
-SHIP_TEMPLATE = [(0, 0), (0, 10), (5, 15), (10, 10), (10, 0)]
-
+N_GOALS = 5
 DEFAULT_BOUNDS = (500, 500)
 
-class ShipGame():
+
+class ShipGame(object):
 
     ships = list()
     goals = list()
 
-    # TODO: Change this to some event enum
-    colliding = False
     frame_counter = 0
-
+    base_dt = 0.1
+    colliding = False
     observe_mode = False
     record = False
-
-    game_frame_dir = "_frames"
-
-    base_dt = 0.1
-
-    __temp_fps = 0
 
     def __init__(self, game_config=None):
 
@@ -51,8 +44,6 @@ class ShipGame():
 
         self.debug_mode = game_config.DEBUG
 
-        os.makedirs(self.game_frame_dir, exist_ok=True)
-
         pygame.init()
         pygame.display.set_caption("Ship Sim Gym")
         pygame.key.set_repeat(10, 10)
@@ -67,33 +58,24 @@ class ShipGame():
         self.reset()
 
     def gen_level(self):
-
-        # print("GENERATING RIVER POLY")
+        """
+        Generate a level on the fly by calling game map gen river poly function wrapping them in a GeoMap object
+        and adding the generated pymunk primitives (shapes and bodies) to the game space
+        :return:
+        """
         poly = game_map.gen_river_poly(self.bounds)
 
-        self.level = GeoMap(poly, self.bounds)
-        # self.level = GeoMap([[[10,10],[10,20]]], self.bounds)
+        self.level = PolyEnv(poly, self.bounds)
 
         for body, shape in zip(self.level.bodies, self.level.shapes):
             self.space.add(body, shape)
-
-    def load_level(self):
-
-        # print("Load level")
-        poly = game_map.load_from_pickle("data/pickles/2R70995Alnd.pck")
-
-        self.level = GeoMap(poly, self.bounds)
-
-        for body, shape in zip(self.level.bodies, self.level.shapes):
-            self.space.add(body, shape)
-
 
     def invert_p(self, p):
         """Because in screen Y=0 is at the top or some shit like that """
         return Vec2d(p[0], self.bounds[1] - p[1])
 
     def add_goal(self, x, y):
-        """Add a ball to the given space at a random position"""
+        """Add a ball to the given space at a random position """
         self.total_goals += 1
 
         mass = 1
@@ -149,39 +131,35 @@ class ShipGame():
         return ship
 
     def get_screen(self):
+        """
+        Returns the game's screen space buffer as a 3D (color) array
+        :return:
+        """
         return pygame.surfarray.array3d(self.screen)
 
-    def handle_cont_action(self, action):
-        # print("ACTION = ", action)
-        self.player.move_forward(float(action[0]))
-        rot = (action[1] - 0.5) * 10
-
-        self.player.rotate(rot)
-
     def handle_discrete_action(self, action):
+        """
+        Handle discrete actions: It is possible to move forward, rotate left and right and do nothing.
+        Moving backwards is not possible, but is easy to add if needed. See the player definition in models for this.
+        :param action: integer value to indicate the action to take
+        """
         if action == 0:
-            # print("W pressed : forwards")
             self.player.move_forward()
-        # elif action == 1:
-            # print("S pressed : backwards")
-            # self.player.move_backward()
         elif action == 1:
-            # print("A pressed : left")
             self.player.rotate(-5)
         elif action == 2:
-            # print("D pressed : right")
             self.player.rotate(+5)
         elif action == 3:
-            # print("Do nothing ... ")
             pass
 
     def handle_input(self):
         """
-        Maps key inputs to actions (via handle_action)
+        Maps key inputs to actions (via handle_discrete_action) and other utility functions such as quit
         """
 
          # Handle key strokes
         for event in pygame.event.get():
+
             # print(event.key)
             if event.type == pygame.QUIT:
                 sys.exit(0)
@@ -191,69 +169,50 @@ class ShipGame():
                     sys.exit(0)
 
                 elif event.key == pygame.K_w:
-                    # print("W pressed")
                     self.handle_discrete_action(0)
+                    print("W pressed. ")
                 elif event.key == pygame.K_s:
-                    # print("S pressed")
+                    print("S pressed")
                     self.handle_discrete_action(1)
                 elif event.key == pygame.K_a:
-                    # print("A pressed")
                     self.handle_discrete_action(2)
+                    print("A pressed. ", self.player.rudder_angle)
                 elif event.key == pygame.K_d:
-                    # print("D pressed")
+                    print("D pressed")
                     self.handle_discrete_action(3)
-                elif event.key == pygame.K_r:
-                    self.observe_mode = not self.observe_mode
-
-                    if self.observe_mode:
-                        print("OBSERVE MODE ACTIVATED ... ")
-                        self.__temp_fps = self.fps
-                    else:
-                        print("OBSERVE MODE DEACTIVATED ... ")
-                        self.fps = self.__temp_fps
-
-                elif event.key == pygame.K_t:
-                    self.player.body.angle += 0.1
-                    print("Test function  ... ")
-
-
-                elif event.key == pygame.K_r:
-                    self.record_mode = not self.record_mode
 
 
     def update(self):
+        """
+        The main update loop, resets certain event states, handles input, sensor routines and updates the game's
+        pymunk space
+        """
         self.colliding = False
         self.goal_reached = False
         self.handle_input()
-
         self.player.query_sensors()
-
         self.space.step(self.speed * self.base_dt)
         self.clock.tick(self.fps)
 
     def render(self):
-
+        """
+        The main render loop clears the screen and draws primitives if requested
+        """
         self.screen.fill((0, 0, 200))
-
-
-        # if self.graphics_enabled:
-        #     pm.space_debug_draw_options
-
         if self.debug_mode:
             options = pm.pygame_util.DrawOptions(self.screen)
             options.flags = pymunk.SpaceDebugDrawOptions.DRAW_SHAPES
             self.space.debug_draw(options)
+
             res = self.player.lidar.query_results
             for r in res:
-                # p = Vec2d(self.player.x + r.point.x, self.player.y + r.point.y)
                 if r is not None and r.shape is None:
                     p = r.point
                     p = self.invert_p(p)
                     p = (round(p.x), round(p.y))
 
-                    # Green
+                    # Green circle indicating the rays did not hot anything
                     pygame.draw.circle(self.screen, (0, 255, 0), p, 10)
-
                 else:
                     p = r.point
                     p = self.invert_p(p)
@@ -264,67 +223,72 @@ class ShipGame():
 
         p = self.invert_p(self.player.position)
 
-        # pygame.draw.circle(self.screen, (255, 255, 0), (round(p.x), round(p.y)), 10)
         pygame.draw.circle(self.screen, (255, 255, 0), (round(p.x), round(p.y)), 10)
         pygame.display.flip()
 
-        #pygame.image.save(screen, os.path.join(game_frame_dir, f"frame_{frame_counter}.jpg"))
         self.frame_counter += 1
 
 
-    def collide_ship(self, x, y, z):
+    def collide_ship(self, arbiter, space, data):
         """
-        Ship collision callback for when the player ship hits another NPC ship
-        :param self:
-        :param x:
-        :param y:
-        :param z:
+        Ship collision callback for when the player ship hits another ship. All params are ignored at this point
+        :param arbiter:
+        :param space:
+        :param data:
         :return:
         """
-        # print("Collide with environment!!")
         self.colliding = True
         return True
 
     def collide_goal(self, arbiter, space, data):
-        # print(" !!! REACHED GOAL !!! ")
+        """
+        Ship collision callback for when the player ship hits a goal object. All params are ignored at this point
+        :param arbiter:
+        :param space:
+        :param data:
+        :return:
+        """
+        shape = arbiter.shapes[1]
+        space.remove(shape, shape.body)
 
-        brick_shape = arbiter.shapes[1]
-        space.remove(brick_shape, brick_shape.body)
         self.goal_reached = True
-
-        self.goals = [g for g in self.goals if g.body is not brick_shape.body]
+        self.goals = [g for g in self.goals if g.body is not shape.body]
 
         return False
 
 
-    # DEFAULT_SPAWN_POINT = Vec2d(10, 20)
-    def reset(self, spawn_point=None):
-
-        if spawn_point is None:
-            spawn_point = Vec2d(self.bounds[0] / 2, 25)
-        if not isinstance(spawn_point, Vec2d):
-            spawn_point = Vec2d(spawn_point)
-
+    def reset(self):
+        """
+        Reset the game. Create the environment, the player and the goals
+        :param spawn_point:
+        :return:
+        """
         self.total_goals = 0
         self.ships = list()
         self.goals = list()
         self.space = pm.Space()
         self.space.damping = 0.4
-
-        # print("CREATING ENVIRONMENT .... ")
         self.create_environment()
-        self.gen_goal_path(5, Vec2d(self.bounds[0] / 2, 50))
-        self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
+        self.gen_goal_path(N_GOALS)
 
+        spawn_point = Vec2d(self.bounds[0] / 2, 25)
+        self.player = self.add_player_ship(spawn_point.x, spawn_point.y, 2, 3, pygame.color.THECOLORS["white"])
         self.player.shape.collision_type = 0
         self.setup_collision_handlers()
 
     def add_default_traffic(self):
+        """
+        Add some simple static traffic to the game
+        :return:
+        """
         self.ships.append(self.add_ship(100, 200, 1, 1, pygame.color.THECOLORS["black"]))
         self.ships.append(self.add_ship(300, 200, 1.5, 2, pygame.color.THECOLORS["black"]))
         self.ships.append(self.add_ship(400, 350, 1, 3, pygame.color.THECOLORS["black"]))
 
     def setup_collision_handlers(self):
+        """
+        Add collision handlers to the game space for goal and obstacle interactions.
+        """
         h = self.space.add_collision_handler(0, 1)
         h.begin = self.collide_ship
 
@@ -333,13 +297,15 @@ class ShipGame():
 
         self.space.add_collision_handler(0, 3)
 
-    def gen_goal_path(self, n, start_pos):
-
+    def gen_goal_path(self, n):
         """
-        NOTE: This is wildly inefficient but at least it's general!
-        :param n:
-        :param start_pos:
-        :return:
+        Generate a path of goals by sampling somewhat randomly the coordinate space. To avoid complete randomness
+        where it is hard to even see a path, I kind of use a jittery approach where delta_y is computed according to
+        the game bounds and incremented, and randomly jittered. The X position is determined by taking a jittered
+        point close to the midline and doing a segment query to the left and right on environmental level shapes (see
+        ShapeFilter). These points are then used as extreme points between which the X value is determined according
+        to some tolerance value.
+        :param n: number of goals to generate
         """
 
         y_delta = self.bounds[1] / (n+1)
@@ -356,19 +322,19 @@ class ShipGame():
                 left_ret = self.space.segment_query((self.bounds[0]/2, y), (0, y), 10, filter)[0]
                 right_ret = self.space.segment_query((self.bounds[0] / 2, y), (self.bounds[0], y), 10, filter)[0]
 
-                # print(left_ret.point)
-                # print(right_ret.point)
-
                 x = np.random.uniform(left_ret.point.x + tolerance, right_ret.point.x - tolerance)
                 self.add_goal(x, y)
 
             except Exception as e:
-                # print("WOOPS", e)
                 x = x_middle * i + random.randint(-x_jitter, x_jitter)
                 self.add_goal(x, y)
 
 
     def closest_goal(self):
+        """
+        Return the goal with the smallest Euclidean distance to the player. Returns None if there are no goals left.
+        :return:
+        """
         if len(self.goals):
             min_goal = self.goals[0]
             min_distance = min_goal.body.position.get_distance(self.player.body.position)
@@ -383,6 +349,10 @@ class ShipGame():
         return None
 
     def create_environment(self):
+        """
+        The hook for creating the environment. Replace the call for gen_level
+        :return:
+        """
         self.gen_level()
 
 
@@ -391,16 +361,17 @@ def main():
     import os
 
     cwd = os.getcwd()
-    
-    
-    g = ShipGame(debug_mode=True)
+    gc = GameConfig
+    gc.SPEED = 1
+    gc.FPS = 30
+    gc.DEBUG = True
+
+    g = ShipGame()
 
     while True:
-
         g.update()
         g.render()
 
-        # print(f"My position = \t{player.x},{player.y}")
 
 
 if __name__ == '__main__':

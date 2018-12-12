@@ -4,28 +4,20 @@ from collections import deque
 import numpy as np
 
 from gym import Env
-from gym.spaces import Discrete, Box
+from gym.spaces import Box
 from gym.utils import seeding
 
-
-# Plus self, other ships and goal position times 2 for x and y coordinates, times history size
-from pymunk import Vec2d
-
-from ship_gym.curriculum import Curriculum
 from ship_gym.game import ShipGame
 
 DEFAULT_STATE_VAL = -1
-
 STEP_PENALTY = -0.01
+
 
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
     action_space = Box(low=0, high=1, shape=(2,), dtype=np.float16)
     reward_range = (-1, 1)
-
-    def __del__(self):
-        print("Delete ShipEnv")
 
     # TODO: Derive the discrete actions
     def __init__(self, game_config, env_config):
@@ -58,13 +50,19 @@ class ShipEnv(Env):
         # print(" *** SHIP-GYM INITIALIZED *** ")
 
     def seed(self, seed=None):
+        """
+        Seed numpy random generator
+        :param seed: the seed to use
+        """
         self.np_random, seed = seeding.np_random(seed)
         # Important to actually seed it!!! I thought above would work but it's not enough
         np.random.seed(seed)
         return [seed]
 
     def determine_reward(self):
-
+        """
+        Determines the reward of the current timestep
+        """
         if self.game.colliding:
             self.reward = -1.0
         if self.game.goal_reached:
@@ -77,9 +75,6 @@ class ShipEnv(Env):
             self.reward = -1
         else:
             self.reward = STEP_PENALTY  # Small penalty
-
-    def _normalized_coords(self, x, y):
-        return x / self.game.bounds[0], y / self.game.bounds[1]
 
     def __add_states(self):
         '''
@@ -105,7 +100,6 @@ class ShipEnv(Env):
         states = self.n_states * [-1]
 
         # Myself
-
         goal = self.game.closest_goal()
         goal_pos = [-1, -1]
         player = self.game.player
@@ -120,51 +114,40 @@ class ShipEnv(Env):
         self.states.extend(states)
 
     def is_done(self):
+        """
+        Determines whether the episode has finished based on collisions and goals reached.
+        :return:
+        """
         if self.game.colliding:
-            # print("OOPS --- COLLISION")
             return True
         elif len(self.game.goals) == 0:
-            print("ALL GOALS REACHED! -- CUM REWARD = ", self.cumulative_reward)
             return True
 
         player = self.game.player
         if player.x < 0 or player.x > self.game.bounds[0]:
-            print("X out of bounds")
-            # 1/0
             return True
         elif player.y < 0 or player.y > self.game.bounds[1]:
-
             return True
 
         if self.step_count >= self.env_config.MAX_STEPS:
-            print("MAX STEPS")
             return True
 
         return False
 
-    def check_curriculum(self):
-        # See which ones are curriculum
-        return
-
-        # NEEDS FIXING!
-
-        currs = [v for k,v in self.config.items() if isinstance(v, Curriculum)]
-        for c in currs:
-
-            if c.progress(self.cumulative_reward):
-                print("\n***\n New lesson = ", c.lesson, "\n***\n")
-
-                # print(int)
-
-
-
-
     def step(self, action):
-        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
+        """
 
+        :param action:
+        :return:
+        """
         if isinstance(self.action_space, Box):
-            self.game.handle_cont_action(action)
+            lb = self.action_space.low
+            ub = self.action_space.high
+            scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
+            scaled_action = np.clip(scaled_action, lb, ub)
+            self.game.handle_cont_action(scaled_action)
         else:
+            assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
             self.game.handle_discrete_action(action)
 
         self.game.update()
@@ -180,75 +163,29 @@ class ShipEnv(Env):
         return np.array(self.states), self.reward, done, {}
 
     def render(self, mode='human', close=False):
-        # print("ShipEnv Render ...")
+        """
+        Display additional debug information about the state of the environment here. You might also render actual images
+        or videos from the game's frame buffer (not currently implemented)
+        :param mode: the display mode, currently ignored but might be use to visualise different ways
+        :param close: Whether to close the environment. Also ignored in the current version
+        """
         out = sys.stdout
 
         if self.last_action is not None:
-            out.write(f'action={self.last_action}, cum_reward={self.cumulative_reward}')
+            out.write(f'action={self.last_action}, cumm_reward={self.cumulative_reward}')
 
-        return
-
-    def setup_goals(self):
-        pass
-        # self.generate_uniform_random_goals()
-
-        # HACK: TODO: I do the int because it can be a curriculum. Should figure out a better way ...
-        # self.gen_goal_path(int(self.config["n_goals"]))
-
-    def setup_obstacles(self):
-        pass
-
-    def setup_player(self):
-        x = np.random.randint(15, self.game.bounds[0])
-        y = np.random.randint(5, 15)
-
-        self.game.player.body.position = Vec2d(x,y)
-
-
-    def setup_game_env(self):
-        # self.setup_player()
-        self.setup_goals()
-        self.setup_obstacles()
-
-
-    def gen_goal_path(self, n):
-
-        x = self.game.player.x
-        y = self.game.player.y + 50
-
-        x_end = np.random.randint(30, self.game.bounds[0] - 30)
-        y_end = np.random.randint(self.game.bounds[1] - 60, self.game.bounds[1] - 30)
-
-        max_n = 5
-        x_delta = (x_end - x) / max_n
-        y_delta = (y_end - y) / max_n
-
-        jitter = 20
-
-        for i in range(1, n+1):
-            gx = x + x_delta * i + np.random.randint(-jitter, jitter)
-            gy = y + y_delta * i + np.random.randint(-jitter, jitter)
-            self.game.add_goal(gx, gy)
 
     def reset(self):
-        # print(">>>> SHIP_ENV RESET!")
         self.game.reset()
-        self.check_curriculum()
-
         self.last_action = None
         self.reward = 0
         self.cumulative_reward = 0
         self.step_count = 0
         self.episodes_count += 1
 
+        # Setup states
         n = self.n_states * self.env_config.HISTORY_SIZE
         self.states = deque([DEFAULT_STATE_VAL] * n, maxlen=n)
-        self.setup_game_env()
         self.__add_states()
 
         return np.array(self.states)
-
-
-if __name__ == '__main__':
-
-    pass

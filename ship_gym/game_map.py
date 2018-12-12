@@ -3,73 +3,13 @@ import json
 import pickle
 import random
 
-from ship_gym.models import GeoMap
-
-
-def dump_S57(ecnfilename, bokeh_land=None, bokeh_sea=None, rasterio_land=None):
-    """
-    WARNING: input arrays will be modified
-    Use GDAL to load S57 into its required bokeh land and sea compoents.
-    A properly formatted rasterio array is also returned (this is used to prepare
-    raster images for the visualization and AI).
-
-        @param (string) filename : the name of the s57 file (no path needed)
-        @param (string) bokeh_land : list of lists (x - > all x points of the land polygons)
-                                                    (y - > all y points of the land polygons)
-        @param (string) bokeh_sea : same as above but for the sea
-        @param (string) rasterio_land : list of [x,y] coordinates which is the format
-                                        that rasterio requires
-        @return
-    """
-
-    try:
-        from osgeo import osr, ogr, gdal
-    except ImportError:
-        import osr, ogr
-
-    if bokeh_land is None and bokeh_sea is None and rasterio_land is None:
-        raise ValueError("You need to give at least one of bokeh_land, bokeh_sea or rasterio_land a value")
-
-    ds = ogr.Open(ecnfilename)
-    assert ds is not None, ("Could not retrieve a GDAL file handle for " + ecnfilename)
-
-    if bokeh_land is not None or rasterio_land is not None:
-
-        layer_block = ds.GetLayerByName('LNDARE')
-        assert layer_block is not None, ("Could not retrieve Land Areas from " + ecnfilename)
-        for feature in layer_block:
-            feature_json_str = feature.ExportToJson()
-            feature_json = json.loads(feature_json_str)
-            coord_list = feature_json["geometry"]["coordinates"][0]
-
-            if rasterio_land is not None:
-                rasterio_land.append([[coord[0], coord[1]] for coord in coord_list])
-
-            if bokeh_land is not None:
-                bokeh_land[0].append([coord[0] for coord in coord_list])
-                bokeh_land[1].append([coord[1] for coord in coord_list])
-
-    if bokeh_sea:
-        layer_block = ds.GetLayerByName('SEAARE')
-        assert layer_block is not None, ("Could not retrieve Sea Areas from " + ecnfilename)
-        for feature in layer_block:
-            feature_json_str = feature.ExportToJson()
-            feature_json = json.loads(feature_json_str)
-            coord_list = feature_json["geometry"]["coordinates"][0]
-            bokeh_sea[0].append([coord[0] for coord in coord_list])
-            bokeh_sea[1].append([coord[1] for coord in coord_list])
-
-        layer_block = ds.GetLayerByName('hrbbsn')
-        assert layer_block is not None, ("Could not retrive Harbour Basins from " + ecnfilename)
-        for feature in layer_block:
-            feature_json_str = feature.ExportToJson()
-            feature_json = json.loads(feature_json_str)
-            coord_list = feature_json["geometry"]["coordinates"][0]
-            bokeh_sea[0].append([coord[0] for coord in coord_list])
-            bokeh_sea[1].append([coord[1] for coord in coord_list])
-
 def load_from_pickle(path):
-
+    """
+    Load a polygon set from pickle, the assumed format here is a 2D list where each list contains lists of either X or Y
+    values of the polygon shape.
+    :param path:
+    :return:
+    """
     poly_list = pickle.load(open(path, "rb"))
 
     # Unwrap the poly list
@@ -77,52 +17,35 @@ def load_from_pickle(path):
     for lats, longs in zip(poly_list[0], poly_list[1]):
         vertex_group.append(list(zip(lats, longs)))
 
-    # return [[[100, 100], [100, 200], [200, 200], [200, 100]]]
-
-    '''
-    *---------------------------------------------------------*
-    |                                                         |
-    |                                                          
-    |
-    |
-    |
-    *---------------------------------------------------------*
-    '''
-    # return [[[1, 0], [2, 0], [2, 1]]]
-    # return [[[1, 0], [2, 0], [2, 1]], [[1, 0.5], [1, 1], [1.5, 1]]]
-
-
-    # biggest_4 = sorted(vertex_group)[:10]
-
     return vertex_group
 
 def gen_river_poly(bounds, N=10, width_frac=0.5):
-
     """
-    Create a simple river / channel like environment with no branches
-    :param bounds:
+    Not the prettiest of code, but this will generate two segments of vertically aligned river banks or shore polygons.
+    You can use these polygons to create shapes and bodies from for physics computation. It is highly recommended you
+    turn them into STATIC type bodies so the physics computation cost is much lower.
+
+    Please note that there are still quite a few
+    :param bounds: The bounds in which to operate.
     :param N:
     :return:
     """
-    # print("Generating riverbank polies for N =", N)
 
-    x_start = 0
     y_start = -100
-    y_delta = (bounds[1]+50-y_start) / N
+    y_delta = (bounds[1]*1.2-y_start) / N
 
     bank_width = width_frac * bounds[0] / 2
 
-    # print(avg_width)
-
-
-    def river_bank_helper(n_segments, x_min, x_max):
-
+    def river_bank_helper(n_segments, x_min, x_max, y_jitter=20, x_jitter=50, max_tries=1000):
+        """
+        Kind of brute force approach to trying to generate a single shore polygon.
+        :param n_segments:
+        :param x_min:
+        :param x_max:
+        :return:
+        """
         vs = list()
-
-        y_jitter = 20
-        x_jitter = 50
         x_middle = x_min + (x_max - x_min)
-        max_tries = 1000
 
         for i in range(1, n_segments+1):
 
@@ -131,17 +54,13 @@ def gen_river_poly(bounds, N=10, width_frac=0.5):
             while invalid_pos:
                 x = random.gauss(x_middle, x_jitter)
                 y = y_start + random.gauss(y_delta * i, y_jitter)
-                # invalid_pos = False
                 invalid_pos = x < x_min or x > x_max
                 try_i += 1
-                # print(x,y)
 
                 if try_i >= max_tries:
-                    print("OH MY ... ALL TRIES EXHAUSTED. RETURNING INVALID TERRAIN")
                     break
 
-            vs.append([x,y])
-
+            vs.append([x, y])
 
         return vs
 
@@ -151,19 +70,4 @@ def gen_river_poly(bounds, N=10, width_frac=0.5):
     right_vs = river_bank_helper(N, bounds[0] - bank_width, bounds[0])
     right_vs.extend([[bounds[0], bounds[1]], [bounds[0], 0]])
 
-    # print("GEN LEVEL DONE  !!! ")
-
-    # Secret border
-    # b_thicknes = 100
-    # border_west = [[0, 0], [-b_thicknes, 0], [-b_thicknes, bounds[1]], [0, bounds[1]]]
-    # border_east  = [[bounds[0], 0], [bounds[0]+b_thicknes, 0], [bounds[0]+b_thicknes, bounds[1]], [bounds[0], bounds[1]]]
-    #
-    # border_north = [[0, bounds[1]+b_thicknes], [bounds[0], bounds[1]+b_thicknes], [bounds[0], bounds[1]+1], [0, bounds[1]+1]]
-    # border_south = [[0, -b_thicknes], [bounds[0], -b_thicknes], [bounds[0], 0], [0, 0]]
-
-    # close the loop
-    # right_vs.append([bounds[0], bounds[1]])
-    # right_vs.append([bounds[0], 0])
-
     return [left_vs, right_vs]
-    # return [left_vs, right_vs, border_east, border_west, border_north, border_south]
