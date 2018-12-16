@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 
 from gym import Env
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 from gym.utils import seeding
 
 from ship_gym.game import ShipGame
@@ -16,7 +16,7 @@ STEP_PENALTY = -0.01
 class ShipEnv(Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
-    action_space = Box(low=0, high=1, shape=(2,), dtype=np.float16)
+    action_space = Discrete(3)
     reward_range = (-1, 1)
 
     # TODO: Derive the discrete actions
@@ -139,15 +139,9 @@ class ShipEnv(Env):
         :param action:
         :return:
         """
-        if isinstance(self.action_space, Box):
-            lb = self.action_space.low
-            ub = self.action_space.high
-            scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
-            scaled_action = np.clip(scaled_action, lb, ub)
-            self.game.handle_cont_action(scaled_action)
-        else:
-            assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
-            self.game.handle_discrete_action(action)
+
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
+        self.game.handle_discrete_action(action)
 
         self.game.update()
         self.game.render()

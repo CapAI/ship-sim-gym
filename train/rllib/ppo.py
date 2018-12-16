@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=1)
 
-    def env_creator():
+    def env_creator(_):
 
         env_config = EnvConfig
         env = ShipEnv(game_config, env_config)

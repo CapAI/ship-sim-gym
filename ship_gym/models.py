@@ -140,7 +140,7 @@ class Ship(object):
             self.rudder_angle = self.max_angle
 
     def rotate(self, angle_incr):
-        print("Rotate player with ", angle_incr)
+        # print("Rotate player with ", angle_incr)
         self.rudder_angle += angle_incr
         self.clamp_rudder()
         self.point_of_thrust.x = self.body.center_of_gravity.x - self.rudder_angle
