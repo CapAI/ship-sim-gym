@@ -10,9 +10,13 @@ For questions / comments: do not hesitate to do so via the issues or a direct PM
 
 Python 3.6 is required. Make sure you are **not** using Python 3.7. It's not supported by ray / rllib and a few others at moment of writing.
 
+First make sure you meet the requirements for each below, then try and do a 
+
+`pip install -r requirements.txt`
+
 ### Pygame / Pymunk
 
-The game is built with pygame and pymunk. pygame is a library that allows for creating windows and drawing primivites. Pymunk is needed for the physics. Both should be pip installable.
+The game is built with pygame and pymunk. pygame is a library that allows for creating windows and drawing primitives. Pymunk is needed for the physics. Both should be pip installable. If not visit their respective websites for more info.
 
 ### Stable Baselines
 
