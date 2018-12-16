@@ -1,13 +1,6 @@
-import random
-
 import ray
-from ray.rllib.agents.ppo import ppo
-from ray.tune import run_experiments, tune, register_env
 
 from ray import tune
-from ray.tune.schedulers import PopulationBasedTraining
-
-from ship_gym.game import ShipGame
 
 from ship_gym.config import GameConfig, EnvConfig
 from ship_gym.ship_env import ShipEnv
@@ -16,8 +9,6 @@ import multiprocessing
 
 if __name__ == "__main__":
 
-    # register_env(env_creator_name, lambda config: ship_gym = gym.make('ShipSim-v0'))
-
     game_config = GameConfig
     game_config.FPS = 100000
     game_config.SPEED = 40
@@ -25,7 +16,7 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=1)
 
-    def env_creator(env_config):
+    def env_creator():
 
         env_config = EnvConfig
         env = ShipEnv(game_config, env_config)
@@ -40,7 +31,7 @@ if __name__ == "__main__":
             },
             "env": "ship-gym-v1",
             "config": {
-            	"num_gpus": 1,
+                "num_gpus": 1,
                 "num_workers" : multiprocessing.cpu_count() - 1,
                 "num_sgd_iter" :  10,
                 "sgd_minibatch_size" : 2048,

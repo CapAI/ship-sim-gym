@@ -93,7 +93,6 @@ class ShipEnv(Env):
         L are the lidar values
         N is the number of rays lidar uses
 
-
         :return: the complete history buffer of states extended with the most recent one
         '''
 

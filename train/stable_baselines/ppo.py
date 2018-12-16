@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import time
 import sys
@@ -32,6 +33,7 @@ def callback(_locals, _globals):
     t = time.time()
 
     if (n_steps + 1) % log_step_interval == 0:
+
         # Evaluate policy performance
         x, y = ts2xy(load_results(log_dir), 'timesteps')
         if len(x) > 0:
@@ -49,7 +51,7 @@ def callback(_locals, _globals):
     n_steps += 1
     return False
 
-def make_env(rank, bounds, game_fps, game_speed, max_steps, seed=0):
+def make_env():
         """
         Utility function for multiprocessed env.
 
@@ -72,31 +74,17 @@ def make_env(rank, bounds, game_fps, game_speed, max_steps, seed=0):
 
         return _init
 
-def get_model_path(n_goals, lr, n_obstacles=0):
-    return os.path.join(model_dir, f"result_g{n_goals}_o{n_obstacles}_lr{lr}")
+def get_model_path(lr):
+    return os.path.join(model_dir, f"result_lr{lr}")
 
 
 tb_root_dir = os.path.join(log_dir, "tb", str(int(time.time())))
 
-def train(model_cls, tid, env, n_goal, n_obstacles, lr, steps):
+def train(model_cls, tid, env, lr, steps):
 
     start_t = time.time()
     tb_dir = os.path.join(tb_root_dir, f"{tid}_{model_cls.__name__}_g{n_goal}_o{n_obstacles}")
-    # model = PPO2(MlpPolicy, env, learning_rate=lr, verbose=0, tensorboard_log=tb_dir)
     model = model_cls(MlpPolicy, env, learning_rate=lr, verbose=1, tensorboard_log=tb_dir)
-
-    if n_goal > 1:
-        # Previous model?
-
-        path = get_model_path(n_goal-1, lr)
-
-        try:
-            model.load(path)
-        except ValueError as e:
-            print(f"WARNING: Could not find model 'path'")
-            time.sleep(0.5)
-
-        print(f"Model '{path}' loaded!")
 
     model.learn(total_timesteps=steps, log_interval=10000)
 
@@ -107,7 +95,7 @@ def train(model_cls, tid, env, n_goal, n_obstacles, lr, steps):
     print(f"Speed = {steps / (elapsed / 60)} steps/min")
     print()
 
-    path = get_model_path(n_goal, lr)
+    path = get_model_path(lr)
     model.save(path)
 
 def main():
@@ -128,52 +116,30 @@ def main():
 
     lrs = [1.0e-3, 1.0e-4, 1.0e-5]
     lrs = [make_lr_func(s, 0) for s in lrs]
-    # noptepochs = [3, 5, 7]
-    # mini_batches
-
-    max_goals = 5
-    max_steps = 1000
-
-    game_fps = 10000
-    game_speed = 10
-    bounds = (800,800)
 
     # Setting it to the number of CPU's you have is usually optimal
-    num_cpu = 1
-    n_obstacles = 0
-    total_train_steps = 1e6
+    num_cpu = multiprocessing.cpu_count()
+    env = SubprocVecEnv([make_env() for i in range(num_cpu)])
 
-    env = SubprocVecEnv([make_env(i, bounds, game_fps, game_speed, max_steps) for i in range(num_cpu)])
     i = 0
-    for n_goal in tqdm(range(1, max_goals+1)):
-        # Update envs to use the right number of goals. <3 this function
-        env.set_attr('n_goals', n_goal)
-        steps = int(total_train_steps / max_goals)
+    steps = 1e6
 
-        for lr in lrs:
-            print(f"""
+    for lr in lrs:
+        print(f"""
 Started training at {datetime.now()}
 ------------------------------------------------
-Training Steps 	:\t {steps} / {max_steps}
-Number of goals :\t {n_goal} / {max_goals}
+Training Steps 	:\t {steps}
 Learning rate   :\t {lr} 
             """)
 
-            i += 1
-            train(PPO2, i, env, n_goal, 0, lr, steps)
-            # train(ACER, env, n_goals, 0, lr, steps)
+        i += 1
+        train(PPO2, i, env, lr, steps)
+        # train(ACER, env, n_goals, 0, lr, steps)
 
     print("*" * 30)
     print(" "*10,"     DONE!     ", " "*10)
     print(" ", datetime.now(), " ")
     print("*" * 30)
-
-    del env
-
-    sys.exit(0)
-
-
-
 
 
 if __name__ == '__main__':

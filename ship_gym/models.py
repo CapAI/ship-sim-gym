@@ -140,7 +140,7 @@ class Ship(object):
             self.rudder_angle = self.max_angle
 
     def rotate(self, angle_incr):
-
+        print("Rotate player with ", angle_incr)
         self.rudder_angle += angle_incr
         self.clamp_rudder()
         self.point_of_thrust.x = self.body.center_of_gravity.x - self.rudder_angle
@@ -183,14 +183,17 @@ class PolyEnv(object):
 
             self.shapes.append(shape)
 
-    def gen_bodies(self):
+    def gen_bodies(self, vertex_group):
         """
         Generate the body for this environment, which in it's current setting is very simple by using a static body,
         which is why we only need a single one. If you want to use dynamic bodies you would have to generate one for
         every shape.
         """
-        body = pm.Body(None, None, body_type=Body.STATIC)
-        self.bodies.append(body)
+        # TODO: FIXME: A list is no longer necessary for this class, but might be useful for other similar classes where you don't use a single static body
+        self.bodies = list()
+        for _ in vertex_group:
+            body = pm.Body(None, None, body_type=Body.STATIC)
+            self.bodies.append(body)
 
     def bb(self):
 

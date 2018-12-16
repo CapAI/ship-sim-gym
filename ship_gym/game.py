@@ -172,14 +172,14 @@ class ShipGame(object):
                     self.handle_discrete_action(0)
                     print("W pressed. ")
                 elif event.key == pygame.K_s:
-                    print("S pressed")
-                    self.handle_discrete_action(1)
+                    print("S pressed. Button not configured")
+                    # self.handle_discrete_action(1)
                 elif event.key == pygame.K_a:
-                    self.handle_discrete_action(2)
+                    self.handle_discrete_action(1)
                     print("A pressed. ", self.player.rudder_angle)
                 elif event.key == pygame.K_d:
-                    print("D pressed")
-                    self.handle_discrete_action(3)
+                    self.handle_discrete_action(2)
+                    print("D pressed. ", self.player.rudder_angle)
 
 
     def update(self):

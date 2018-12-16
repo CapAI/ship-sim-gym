@@ -4,13 +4,11 @@ Low-fidelity high-performance ship simulator built with pygame / pymunk with Ope
 
 This gym and the accompanying scripts allow you to quickly iterate over different ideas	
 
-For questions / comments: do not hesitate to do so via the issues or a direct PM to gerardsimons.
+For questions / comments: do not hesitate to do so via the issues or a direct PM to [gerardsimons](https://github.com/gerardsimons/).
 
 ## Requirements
 
-Make sure you are **not** using Python 3.7. It's not supported by ray / rllib and a few others at moment of writing.
-
-Code has been developed and tested with Python 3.6
+Python 3.6 is required. Make sure you are **not** using Python 3.7. It's not supported by ray / rllib and a few others at moment of writing.
 
 ### Pygame / Pymunk
 
@@ -42,7 +40,7 @@ Run from the repo root:
 
 `jupyter notebook notebooks`
 
-If you prefer you can also run the scripts in train manually by calling them as modules. For example to run the PPO trainer of RLLib do:
+NOTE: It seems some of the code doesn't do to well in a notebook cell. If you prefer you can also run the scripts in train manually by calling them as modules. For example to run the PPO trainer of RLLib do:
 
 `python -m train.rllib.ppo`
 
