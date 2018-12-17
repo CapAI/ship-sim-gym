@@ -65,6 +65,7 @@ def make_env():
         game_config = GameConfig
         game_config.FPS = 1000
         game_config.SPEED = 30
+        game_config.DEBUG = True # This will render more primitives to make it more observable for humans (you), although this is not necessary for training and incurs a small performance hit
         game_config.BOUNDS = (1000, 1000)
 
         def _init():
@@ -83,7 +84,7 @@ tb_root_dir = os.path.join(log_dir, "tb", str(int(time.time())))
 def train(model_cls, tid, env, lr, steps):
 
     start_t = time.time()
-    tb_dir = os.path.join(tb_root_dir, f"{tid}_{model_cls.__name__}_g{n_goal}_o{n_obstacles}")
+    tb_dir = os.path.join(tb_root_dir, f"{tid}_{model_cls.__name__}")
     model = model_cls(MlpPolicy, env, learning_rate=lr, verbose=1, tensorboard_log=tb_dir)
 
     model.learn(total_timesteps=steps, log_interval=10000)
@@ -122,7 +123,7 @@ def main():
     env = SubprocVecEnv([make_env() for i in range(num_cpu)])
 
     i = 0
-    steps = 1e6
+    steps = int(1e6)
 
     for lr in lrs:
         print(f"""

@@ -44,16 +44,26 @@ Run from the repo root:
 
 `jupyter notebook notebooks`
 
-NOTE: It seems some of the code doesn't do to well in a notebook cell. If you prefer you can also run the scripts in train manually by calling them as modules. For example to run the PPO trainer of RLLib do:
+NOTE: It seems some of the code doesn't do to well in a notebook cell. If you prefer you can also run the scripts in train manually by calling them as modules. 
+
+For example to run the stable-baselines PPO script do
+
+`python -m train.stable_baselines.ppo`
+
+To run the PPO trainer of RLLib do:
 
 `python -m train.rllib.ppo`
+
+Or the population based training schedule:
+
+`python -m train.rllib.pbt`
 
 ## Contributing
 
 Again feel free to discuss ideas or propose new features via the issues tab!
 
-If you have an idea for a feature, feel free to create your own feature branch:
+If you have an idea for a feature, feel free to create your own feature branch from dev:
 
-`git checkout -b feature/<feature_name>`
+`git checkout -b feature/<feature_name> dev`
 
 Once finished, you can do a pull request. 

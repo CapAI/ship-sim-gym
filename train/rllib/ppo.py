@@ -12,16 +12,16 @@ if __name__ == "__main__":
     game_config = GameConfig
     game_config.FPS = 100000
     game_config.SPEED = 40
+    game_config.DEBUG = True
     game_config.BOUNDS = (1000, 1000)
 
+    # Change this to 0 if you don't have any CUDA enabled GPUs
     ray.init(num_gpus=1)
 
     def env_creator(_):
 
         env_config = EnvConfig
-        env = ShipEnv(game_config, env_config)
-
-        return env
+        return ShipEnv(game_config, env_config)
 
     experiments = {
         "shipgym_best": {
