@@ -1,5 +1,7 @@
 # Ship Sim Gym
 
+![Screenshot of Ship Sim Gym](static/img/ship-sim-gym.png?raw=true "Screenshot of Ship Sim Gym")
+
 Low-fidelity high-performance ship simulator built with pygame / pymunk with OpenAI gym wrapper and example scripts for stable-baselines and rllib for training RL agents.
 
 This gym and the accompanying scripts allow you to quickly iterate over different ideas	
@@ -64,6 +66,6 @@ Again feel free to discuss ideas or propose new features via the issues tab!
 
 If you have an idea for a feature, feel free to create your own feature branch from dev:
 
-`git checkout -b feature/<feature_name> dev`
+`git checkout -b feature/<featuer_name> dev`
 
 Once finished, you can do a pull request. 

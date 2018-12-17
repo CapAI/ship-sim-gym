@@ -1,11 +1,4 @@
-import random
-import time
-
-import gym
-import ship_gym
-import numpy as np
 from ship_gym.ship_env import ShipEnv
-
 from ship_gym.config import EnvConfig, GameConfig
 
 gc = GameConfig
@@ -25,12 +18,10 @@ for _ in range(1000):
         env.render()
 
         ret = env.step(env.action_space.sample())  # take a random action
-
         print(ret)
+
         total_reward += ret[1]
         if ret[2] == True:
             print(f"AGENT IS DONE. TOTAL REWARD = {total_reward}")
             env.reset()
             break
-
-        
