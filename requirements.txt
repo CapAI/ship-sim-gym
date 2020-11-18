@@ -55,7 +55,7 @@ more-itertools==4.3.0
 mpi4py==3.0.0
 nbconvert==5.4.0
 nbformat==4.4.0
-notebook==5.7.2
+notebook==6.1.5
 numpy==1.15.4
 opencv-python==3.4.3.18
 pandas==0.23.4
